@@ -14,10 +14,9 @@ import { scheduleOnRN } from 'react-native-worklets';
 import * as Haptics from 'expo-haptics';
 import { useExclusiveGestures } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import HangingSnooze, { snoozeGeometry } from './HangingSnooze';
+import ArtHangingSnooze, { artGeometry, type ArtEyes } from './ArtHangingSnooze';
 import SkyBackground from './SkyBackground';
 import { useSwing } from './useSwing';
-import type { Eyes } from './Snooze';
 import { BRAND, skyFor } from './sky';
 import { ui } from './ui';
 
@@ -51,13 +50,13 @@ export default function RingingScreen({ onWake, onSnooze }: { onWake: () => void
   const alarmAt = new Date();
   alarmAt.setHours(ALARM.hour, ALARM.minute, 0, 0);
   const sky = skyFor(alarmAt);
-  const size = Math.min(width * 0.62, 270);
-  const branchY = insets.top + height * 0.3;
-  const { feetY } = snoozeGeometry(size);
+  const displayW = Math.min(width * 0.56, 240);
+  const branchY = insets.top + height * 0.29;
+  const { feetBelowBranch } = artGeometry(displayW);
 
   const swing = useSwing();
   const drag = useExclusiveGestures(swing.pan);
-  const [eyes, setEyes] = useState<Eyes>('closed');
+  const [eyes, setEyes] = useState<ArtEyes>('closed');
   const zzz = useSharedValue(1);
   const hold = useSharedValue(0);
 
@@ -72,9 +71,9 @@ export default function RingingScreen({ onWake, onSnooze }: { onWake: () => void
     return () => clearInterval(id);
   }, [swing.omega]);
 
-  // Eyes open as you hold: closed -> sleepy logo eyes -> wide open.
+  // Eyes open as you hold: closed -> the art's sleepy eyes -> wide open.
   const eyesFromHold = useCallback((stage: number) => {
-    setEyes(stage === 0 ? 'closed' : stage === 1 ? 'logo' : 'open');
+    setEyes(stage === 0 ? 'closed' : stage === 1 ? 'art' : 'open');
   }, []);
   useAnimatedReaction(
     () => (hold.value > 0.75 ? 2 : hold.value > 0.3 ? 1 : 0),
@@ -108,14 +107,14 @@ export default function RingingScreen({ onWake, onSnooze }: { onWake: () => void
 
   const h12 = ALARM.hour % 12 || 12;
   const bodyCx = width / 2;
-  const bodyCy = branchY + feetY * 0.55;
+  const bodyCy = branchY + feetBelowBranch * 0.55;
 
   return (
     <View style={ui.root}>
       <SkyBackground sky={sky} sunTop={0.7} riseMs={60000} />
-      <Ripple delay={0} size={size * 1.5} cx={bodyCx} cy={bodyCy} />
-      <Ripple delay={700} size={size * 1.5} cx={bodyCx} cy={bodyCy} />
-      <Ripple delay={1400} size={size * 1.5} cx={bodyCx} cy={bodyCy} />
+      <Ripple delay={0} size={displayW * 1.6} cx={bodyCx} cy={bodyCy} />
+      <Ripple delay={700} size={displayW * 1.6} cx={bodyCx} cy={bodyCy} />
+      <Ripple delay={1400} size={displayW * 1.6} cx={bodyCx} cy={bodyCy} />
 
       <View style={[styles.top, { paddingTop: insets.top + 26 }]}>
         <Text style={styles.eyebrow}>HELLO, WAKE UP!!</Text>
@@ -125,7 +124,7 @@ export default function RingingScreen({ onWake, onSnooze }: { onWake: () => void
         <Text style={styles.label}>{ALARM.label}</Text>
       </View>
 
-      <HangingSnooze width={width} size={size} branchY={branchY} swing={swing} eyes={eyes} mouth="logo" zzz={zzz} gesture={drag} />
+      <ArtHangingSnooze width={width} displayW={displayW} branchY={branchY} swing={swing} eyes={eyes} mouth="art" zzz={zzz} gesture={drag} />
 
       <View style={[styles.actions, { paddingBottom: insets.bottom + 20 }]}>
         <Pressable

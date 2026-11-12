@@ -1,6 +1,6 @@
 // Welcome screen: Snooze hangs from a branch under the sky of the hour.
 // Tilt the phone and Snooze swings. Drag to push. Tap to wake.
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   useAnimatedReaction,
@@ -14,10 +14,9 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { useExclusiveGestures, useTapGesture } from 'react-native-gesture-handler';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import HangingSnooze, { snoozeGeometry } from './HangingSnooze';
+import ArtHangingSnooze, { artGeometry, type ArtEyes, type ArtMouth } from './ArtHangingSnooze';
 import SkyBackground from './SkyBackground';
 import { useSwing } from './useSwing';
-import type { Eyes, Mouth } from './Snooze';
 import { BRAND, skyFor } from './sky';
 import { ui } from './ui';
 
@@ -25,19 +24,21 @@ export default function WelcomeScreen({ onStart }: { onStart: () => void }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const sky = skyFor();
-  const size = Math.min(width * 0.7, 300);
-  const branchY = insets.top + height * 0.15;
-  const { feetY } = snoozeGeometry(size);
+  const displayW = Math.min(width * 0.64, 270);
+  const branchY = insets.top + height * 0.13;
+  const { feetBelowBranch } = artGeometry(displayW);
 
   const swing = useSwing();
-  const [eyes, setEyes] = useState<Eyes>('closed');
-  const [mouth, setMouth] = useState<Mouth>('logo');
+  const [eyes, setEyes] = useState<ArtEyes>('closed');
+  const [mouth, setMouth] = useState<ArtMouth>('art');
   const [awake, setAwake] = useState(false);
+  const awakeRef = useRef(false); // read by gesture callbacks, which can hold stale state
   const bubble = useSharedValue(0);
   const zzz = useSharedValue(1);
 
   const wake = useCallback(() => {
-    if (awake) return;
+    if (awakeRef.current) return;
+    awakeRef.current = true;
     setAwake(true);
     setEyes('open');
     setMouth('open');
@@ -45,15 +46,16 @@ export default function WelcomeScreen({ onStart }: { onStart: () => void }) {
     bubble.value = withSequence(withSpring(1, { damping: 9 }), withTiming(1, { duration: 1600 }), withTiming(0, { duration: 250 }));
     zzz.value = withTiming(0, { duration: 200 });
     setTimeout(() => {
-      setEyes('logo'); // back to the sleepy logo face
-      setMouth('logo');
+      setEyes('art'); // back to the sleepy face in the art
+      setMouth('art');
     }, 1900);
     setTimeout(() => {
       setEyes('closed');
+      awakeRef.current = false;
       setAwake(false);
       zzz.value = withTiming(1, { duration: 600 });
     }, 3600);
-  }, [awake, bubble, zzz]);
+  }, [bubble, zzz]);
 
   const tap = useTapGesture({
     maxDistance: 10, // a drag is never a tap
@@ -65,12 +67,12 @@ export default function WelcomeScreen({ onStart }: { onStart: () => void }) {
   });
   const gestures = useExclusiveGestures(swing.pan, tap);
 
-  // Fast swings crack the eyes open into the sleepy logo face, then they drift shut again.
+  // Fast swings crack the eyes open into the sleepy face from the art, then they drift shut again.
   const setEyesFromSpeed = useCallback(
     (fast: boolean) => {
-      if (!awake) setEyes(fast ? 'logo' : 'closed');
+      if (!awakeRef.current) setEyes(fast ? 'art' : 'closed');
     },
-    [awake],
+    [],
   );
   useAnimatedReaction(
     () => Math.abs(swing.omega.value) > 1.6,
@@ -87,13 +89,13 @@ export default function WelcomeScreen({ onStart }: { onStart: () => void }) {
   return (
     <View style={ui.root}>
       <SkyBackground sky={sky} />
-      <HangingSnooze width={width} size={size} branchY={branchY} swing={swing} eyes={eyes} mouth={mouth} zzz={zzz} gesture={gestures} />
-      <Animated.View style={[ui.bubble, { top: branchY + feetY + 10 }, bubbleStyle]} pointerEvents="none">
+      <ArtHangingSnooze width={width} displayW={displayW} branchY={branchY} swing={swing} eyes={eyes} mouth={mouth} zzz={zzz} gesture={gestures} />
+      <Animated.View style={[ui.bubble, { top: branchY + feetBelowBranch + 10 }, bubbleStyle]} pointerEvents="none">
         <Text style={ui.bubbleText}>Hello, wake up!!</Text>
       </Animated.View>
       <View style={[styles.bottom, { paddingBottom: insets.bottom + 20 }]}>
-        <Text style={styles.brand}>Slothrise</Text>
-        <Text style={styles.sub}>Tilt your phone. Give me a push.{'\n'}Tap me if you dare.</Text>
+        <Text style={[styles.brand, { color: sky.ink }]}>Slothrise</Text>
+        <Text style={[styles.sub, { color: sky.ink }]}>Tilt your phone. Give me a push.{'\n'}Tap me if you dare.</Text>
         <Pressable
           accessibilityRole="button"
           style={({ pressed }) => [ui.ctaLight, pressed && ui.pressed]}
@@ -104,7 +106,7 @@ export default function WelcomeScreen({ onStart }: { onStart: () => void }) {
         >
           <Text style={ui.ctaLightText}>Let’s get up</Text>
         </Pressable>
-        <Text style={styles.hint}>Plays a demo alarm</Text>
+        <Text style={[styles.hint, { color: sky.ink }]}>Plays a demo alarm</Text>
       </View>
     </View>
   );
