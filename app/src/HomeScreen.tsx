@@ -146,11 +146,14 @@ function Day({ onRing, onGentle, onRoutine, streak, alarms, next, wins, onToggle
           <Text style={styles.heroEmpty}>No other alarms. The one above is the whole schedule.</Text>
         )}
 
-        <FlatCard style={{ gap: 2, marginTop: 6 }}>
-          <Label>TRY IT</Label>
-          <TextButton label={next ? `Ring the ${clock(next.alarm.hour, next.alarm.minute).time} alarm now` : 'Ring an alarm now'} onPress={onRing} />
-          <TextButton label="Play the Gentle sunrise" onPress={onGentle} />
-        </FlatCard>
+        {/* Dev-only shortcut into the ring and sunrise screens. __DEV__ is false in release builds, so this never ships. */}
+        {__DEV__ ? (
+          <FlatCard style={{ gap: 2, marginTop: 6 }}>
+            <Label>TRY IT</Label>
+            <TextButton label={next ? `Ring the ${clock(next.alarm.hour, next.alarm.minute).time} alarm now` : 'Ring an alarm now'} onPress={onRing} />
+            <TextButton label="Play the Gentle sunrise" onPress={onGentle} />
+          </FlatCard>
+        ) : null}
       </ScrollView>
       <TabBar active="alarms" onAlarms={() => {}} onRoutine={onRoutine} />
     </View>
