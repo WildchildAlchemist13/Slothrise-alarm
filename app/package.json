@@ -10,6 +10,7 @@
     "expo": "~58.0.24",
     "expo-asset": "~58.0.21",
     "expo-audio": "~58.0.12",
+    "expo-dev-client": "~58.0.19",
     "expo-font": "~58.0.12",
     "expo-haptics": "~58.0.8",
     "expo-notifications": "~58.1.9",

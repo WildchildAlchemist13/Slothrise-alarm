@@ -48,7 +48,7 @@ export default function App() {
   const reschedule = useCallback((alarms: Alarm[]) => {
     void scheduleAlarms(alarms).then((result) => {
       setScheduled(result.scheduled);
-      if (__DEV__ && result.error) console.warn('[alarms] schedule failed:', result.error);
+      if (__DEV__) console.log('[alarms] scheduled', result.scheduled, result.error ? `error: ${result.error}` : 'ok');
     });
   }, []);
 
