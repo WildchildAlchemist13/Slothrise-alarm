@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "Slothrise",
+    "slug": "slothrise",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.slothrise.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#C9A9DA",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.slothrise.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-audio"
+    ],
+    "backgroundColor": "#0E0B1A"
+  }
+}
