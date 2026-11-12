@@ -52,7 +52,7 @@ development build (`npx eas-cli@latest build --profile development`).
 
 - **Android:** exact alarms via `USE_EXACT_ALARM` / `SCHEDULE_EXACT_ALARM`, delivered with `delivery: 'alarmClock'` on a
   MAX-importance channel with `ALARM` audio usage, bypass-DND, a public lock-screen presentation and the looping
-  `alarm-chime.wav`. Android 13+ grants `USE_EXACT_ALARM` without a prompt to alarm-clock apps; Android 12 users are
+  `alarm_chime.wav`. Android 13+ grants `USE_EXACT_ALARM` without a prompt to alarm-clock apps; Android 12 users are
   asked for the exact-alarm permission on first launch.
 - **Android limit:** `expo-notifications` in SDK 58 has no full-screen-intent option, so the alarm arrives as a
   high-priority heads-up notification that turns the screen on; tapping it opens the ringing screen. A true

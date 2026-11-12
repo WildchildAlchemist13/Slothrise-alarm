@@ -16,12 +16,12 @@ T = 2.4; chime = np.zeros(int(T * SR))
 for rep in range(2):
     for i, f in enumerate([523.25, 659.25, 783.99, 1046.5]):
         chime += note(f, 0.9, rep * 1.2 + i * 0.13, T, decay=5)
-save('alarm-chime', chime)
+save('alarm_chime', chime)
 # 2. Soft bells for Gentle mode: slow, warm, lots of space. 4.8 s loop.
 T = 4.8; bells = np.zeros(int(T * SR))
 for start, f in [(0, 440), (0.02, 660), (1.6, 392), (3.2, 523.25), (3.22, 784)]:
     bells += note(f, 2.6, start, T, decay=1.6, harmonics=((1, 1), (2.76, .18), (5.4, .06)), attack=.03)
-save('gentle-bells', bells)
+save('gentle_bells', bells)
 # 3. Snooze's yawn: a gliding hum that drops and fades.
 T = 1.8; t = np.arange(int(T * SR)) / SR
 f = 330 * (165 / 330) ** (np.minimum(t, 1.5) / 1.5)

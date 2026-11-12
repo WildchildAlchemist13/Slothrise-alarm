@@ -9,7 +9,7 @@ import * as Notifications from 'expo-notifications';
 import type { Alarm } from './state';
 
 export const ALARM_CHANNEL = 'alarm';
-export const ALARM_SOUND = 'alarm-chime.wav';
+export const ALARM_SOUND = 'alarm_chime.wav';
 
 export type AlarmPermissions = {
   /** notification permission granted */

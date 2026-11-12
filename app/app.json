@@ -46,7 +46,7 @@
           "color": "#FF7A45",
           "defaultChannel": "alarm",
           "sounds": [
-            "./assets/sounds/alarm-chime.wav"
+            "./assets/sounds/alarm_chime.wav"
           ]
         }
       ],
