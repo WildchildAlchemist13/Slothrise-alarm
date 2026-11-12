@@ -47,7 +47,7 @@ function Key({ label, onPress, kind = 'num', a11y, children }: { label?: string;
   );
 }
 
-export default function MissionScreen({ onDone }: { onDone: () => void }) {
+export default function MissionScreen({ time, onDone }: { time: string; onDone: () => void }) {
   const insets = useSafeAreaInsets();
   const [round, setRound] = useState(0);
   const sum = useMemo(() => makeSum(round), [round]);
@@ -78,7 +78,7 @@ export default function MissionScreen({ onDone }: { onDone: () => void }) {
       <View style={[styles.top, { paddingTop: insets.top + 16 }]}>
         <View>
           <Text style={styles.eyebrow}>STILL RINGING</Text>
-          <Text style={styles.smallTime}>6:30</Text>
+          <Text style={styles.smallTime}>{time || '—'}</Text>
         </View>
         <View style={styles.dots} accessibilityLabel={`Sum ${round + 1} of ${ROUNDS}`}>
           {Array.from({ length: ROUNDS }, (_, i) => (

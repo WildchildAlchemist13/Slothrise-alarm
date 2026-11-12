@@ -59,7 +59,7 @@ function Sunburst({ size }: { size: number }) {
   );
 }
 
-export default function WinScreen({ streakBefore, onRoutine, onDone }: { streakBefore: number; onRoutine: () => void; onDone: () => void }) {
+export default function WinScreen({ streak: streakNow, onRoutine, onDone }: { streak: number; onRoutine: () => void; onDone: () => void }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const burst = Math.min(width * 0.72, 290);
@@ -75,7 +75,7 @@ export default function WinScreen({ streakBefore, onRoutine, onDone }: { streakB
   const reveal = useSharedValue(0);
   const today = useSharedValue(0);
   const pop = useSharedValue(1);
-  const [streak, setStreak] = useState(streakBefore);
+  const [streak, setStreak] = useState(Math.max(0, streakNow - 1));
 
   const pieces = useMemo<Piece[]>(
     () =>
@@ -89,10 +89,10 @@ export default function WinScreen({ streakBefore, onRoutine, onDone }: { streakB
   const onLand = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     setTimeout(() => {
-      setStreak(streakBefore + 1);
+      setStreak(streakNow);
       pop.value = withSequence(withTiming(1.3, { duration: 140 }), withSpring(1, { damping: 7 }));
     }, 450);
-  }, [pop, streakBefore]);
+  }, [pop, streakNow]);
 
   useEffect(() => {
     spin.value = withRepeat(withTiming(1, { duration: 24000, easing: Easing.linear }), -1, false);
