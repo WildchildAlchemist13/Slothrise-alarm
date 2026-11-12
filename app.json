@@ -22,7 +22,8 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-audio"
     ],
     "backgroundColor": "#0E0B1A"
   }

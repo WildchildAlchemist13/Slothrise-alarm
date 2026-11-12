@@ -16,6 +16,15 @@ Snooze the sloth hangs from a branch under the sky of the hour. The sky colours 
 
 All motion is code: `react-native-reanimated` runs the physics every frame on the UI thread (`useFrameCallback`) and reads tilt with `useAnimatedSensor(SensorType.GRAVITY)`. Snooze is drawn with `react-native-svg`.
 
+## The demo flow
+
+**Welcome** → *Let’s get up* → **Ringing** → hold to wake → **Wake win**
+**Welcome** → *try Gentle mode* → **Gentle sunrise** → *I’m up* → **Wake win** (or, still in bed after 30 s, the full **Ringing** alarm takes over)
+
+- **Ringing:** the sunrise chime loops at full volume, every beat jolts Snooze and buzzes the phone, and Snooze's eyes open as you hold the button.
+- **Gentle mode:** the screen starts dark and brightens into the sky of the hour while soft bells rise from a whisper (6% to 100% volume). Snooze yawns at the start and his eyes drift open halfway. The demo uses a 15 s sunrise and a 30 s backup; the real timings (180 s and 300 s) are `SUNRISE_S` and `BACKUP_S` in `src/GentleScreen.tsx`.
+- **Sound** plays even with the phone on silent. All three sounds (`assets/sounds/`) were synthesised for Slothrise, so there are no licences to clear.
+
 ## Run it on your phone
 
 1. Install [Node.js](https://nodejs.org) (LTS) on your computer.
@@ -50,4 +59,11 @@ The knobs are at the top of `src/WelcomeScreen.tsx`:
 - `src/WelcomeScreen.tsx`: the interactive scene and the physics
 - `src/Snooze.tsx`: Snooze, drawn in code (body, cap and arms are separate layers so they can move independently)
 - `src/sky.ts`: sky-of-the-hour colours and brand colours
+- `src/GentleScreen.tsx`, `src/RingingScreen.tsx`, `src/WinScreen.tsx`: the alarm screens
+- `src/ArtHangingSnooze.tsx`: the hand-drawn hanging Snooze, leaning under its hands
+- `src/sound.ts`: alarm sounds (`expo-audio`)
+
+## Not yet
+
+This is a demo of the wake-up experience. Real alarms that ring while the app is closed or the phone is locked need native alarm scheduling (AlarmKit on iOS, exact alarms on Android). Expo Go can't run those, so that step needs a development build (`npx eas-cli@latest build --profile development`).
 - `assets/icon.png`: the app icon, rendered from the original Slothrise icon

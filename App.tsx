@@ -8,9 +8,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import WelcomeScreen from './src/WelcomeScreen';
 import RingingScreen from './src/RingingScreen';
 import WinScreen from './src/WinScreen';
+import GentleScreen from './src/GentleScreen';
 import { BRAND } from './src/sky';
 
-type Screen = 'welcome' | 'ringing' | 'win';
+type Screen = 'welcome' | 'ringing' | 'gentle' | 'win';
 
 export default function App() {
   const [fontsLoaded] = useFonts({ Fredoka_500Medium, Fredoka_600SemiBold, Fredoka_700Bold });
@@ -28,7 +29,8 @@ export default function App() {
       <SafeAreaProvider>
         <StatusBar style="light" />
         <Animated.View key={`${screen}-${runId}`} entering={FadeIn.duration(250)} style={{ flex: 1 }}>
-          {screen === 'welcome' && <WelcomeScreen onStart={() => go('ringing')} />}
+          {screen === 'welcome' && <WelcomeScreen onStart={() => go('ringing')} onGentle={() => go('gentle')} />}
+          {screen === 'gentle' && <GentleScreen onWake={() => go('win')} onEscalate={() => go('ringing')} />}
           {screen === 'ringing' && <RingingScreen onWake={() => go('win')} onSnooze={() => go('welcome')} />}
           {screen === 'win' && <WinScreen onAgain={() => go('ringing')} onDone={() => go('welcome')} />}
         </Animated.View>

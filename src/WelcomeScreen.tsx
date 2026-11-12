@@ -20,7 +20,7 @@ import { useSwing } from './useSwing';
 import { BRAND, skyFor } from './sky';
 import { ui } from './ui';
 
-export default function WelcomeScreen({ onStart }: { onStart: () => void }) {
+export default function WelcomeScreen({ onStart, onGentle }: { onStart: () => void; onGentle: () => void }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const sky = skyFor();
@@ -106,7 +106,11 @@ export default function WelcomeScreen({ onStart }: { onStart: () => void }) {
         >
           <Text style={ui.ctaLightText}>Let’s get up</Text>
         </Pressable>
-        <Text style={[styles.hint, { color: sky.ink }]}>Plays a demo alarm</Text>
+        <Pressable accessibilityRole="button" onPress={onGentle} hitSlop={10}>
+          <Text style={[styles.hint, { color: sky.ink }]}>
+            Plays a demo alarm · <Text style={styles.link}>try Gentle mode</Text>
+          </Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -116,5 +120,6 @@ const styles = StyleSheet.create({
   bottom: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 24, gap: 10, alignItems: 'center' },
   brand: { fontFamily: 'Fredoka_700Bold', fontSize: 46, color: '#FFF4E2', letterSpacing: -0.5 },
   sub: { fontFamily: 'Fredoka_500Medium', fontSize: 17, color: '#FFF4E2', textAlign: 'center', lineHeight: 23 },
-  hint: { fontFamily: 'Fredoka_500Medium', fontSize: 13, color: BRAND.plum, opacity: 0.75 },
+  hint: { fontFamily: 'Fredoka_500Medium', fontSize: 14, color: BRAND.plum, opacity: 0.85 },
+  link: { fontFamily: 'Fredoka_700Bold', textDecorationLine: 'underline' },
 });

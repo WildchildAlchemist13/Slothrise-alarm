@@ -19,10 +19,11 @@ import SkyBackground from './SkyBackground';
 import { useSwing } from './useSwing';
 import { BRAND, skyFor } from './sky';
 import { ui } from './ui';
+import HoldButton from './HoldButton';
+import { SOUNDS, useLoopingSound } from './sound';
 
 const ALARM = { hour: 7, minute: 15, label: 'Writing sprint' };
 const BEAT_MS = 650;   // one alarm "ring"
-const HOLD_MS = 1100;  // how long to hold to wake
 
 function Ripple({ delay, size, cx, cy }: { delay: number; size: number; cx: number; cy: number }) {
   const p = useSharedValue(0);
@@ -60,6 +61,9 @@ export default function RingingScreen({ onWake, onSnooze }: { onWake: () => void
   const zzz = useSharedValue(1);
   const hold = useSharedValue(0);
 
+  // The alarm sound: the bright chime, looping at full volume until you're up.
+  useLoopingSound(SOUNDS.chime, 1);
+
   // The alarm: each beat kicks the swing the other way and buzzes the phone.
   useEffect(() => {
     let dir = 1;
@@ -82,24 +86,6 @@ export default function RingingScreen({ onWake, onSnooze }: { onWake: () => void
     },
   );
 
-  const finish = useCallback(() => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    onWake();
-  }, [onWake]);
-  const startHold = () => {
-    zzz.value = withTiming(0, { duration: 300 });
-    hold.value = withTiming(1, { duration: HOLD_MS * (1 - hold.value), easing: Easing.linear }, (done) => {
-      if (done) scheduleOnRN(finish);
-    });
-  };
-  const endHold = () => {
-    if (hold.value < 1) {
-      hold.value = withTiming(0, { duration: 250 });
-      zzz.value = withTiming(1, { duration: 400 });
-    }
-  };
-
-  const fillStyle = useAnimatedStyle(() => ({ width: `${hold.value * 100}%` }));
   // The time shakes with the ring, calming as you hold.
   const timeStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${0.035 * (1 - hold.value) * Math.sin(swing.time.value * 26)}rad` }],
@@ -127,16 +113,13 @@ export default function RingingScreen({ onWake, onSnooze }: { onWake: () => void
       <ArtHangingSnooze width={width} displayW={displayW} branchY={branchY} swing={swing} eyes={eyes} mouth="art" zzz={zzz} gesture={drag} />
 
       <View style={[styles.actions, { paddingBottom: insets.bottom + 20 }]}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Hold to wake up"
-          onPressIn={startHold}
-          onPressOut={endHold}
-          style={ui.ctaDark}
-        >
-          <Animated.View style={[styles.fill, fillStyle]} />
-          <Text style={ui.ctaDarkText}>Hold to wake up</Text>
-        </Pressable>
+        <HoldButton
+          label="Hold to wake up"
+          onDone={onWake}
+          progress={hold}
+          onHoldStart={() => (zzz.value = withTiming(0, { duration: 300 }))}
+          onHoldCancel={() => (zzz.value = withTiming(1, { duration: 400 }))}
+        />
         <Pressable accessibilityRole="button" onPress={onSnooze} style={({ pressed }) => [styles.snooze, pressed && ui.pressed]}>
           <Text style={styles.snoozeText}>Snooze 5 min</Text>
           <Text style={styles.snoozeSub}>Your streak is at risk</Text>
@@ -153,7 +136,6 @@ const styles = StyleSheet.create({
   time: { fontFamily: 'Fredoka_700Bold', fontSize: 104, lineHeight: 112, color: BRAND.plum },
   label: { fontFamily: 'Fredoka_600SemiBold', fontSize: 22, color: BRAND.plum },
   actions: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 22, gap: 12 },
-  fill: { position: 'absolute', left: 0, top: 0, bottom: 0, backgroundColor: '#FF8A3D' },
   snooze: {
     height: 58,
     borderRadius: 18,
