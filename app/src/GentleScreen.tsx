@@ -10,17 +10,23 @@ import { RisingSun, SkyGradient } from './Scenery';
 import { SOUNDS, useLoopingSound, useOneShot } from './sound';
 import { C, F, POSE_RATIO, POSES } from './theme';
 
-// Demo timings so you can feel the whole thing quickly. In the real app: sunrise 180 s, backup 300 s.
-export const SUNRISE_S = 15;
-export const BACKUP_S = 30;
+// Product timings: a three-minute sunrise, then the full alarm at five minutes.
+export const SUNRISE_S = 180;
+export const BACKUP_S = 300;
+// Demo timings, used only by the dev-only "Play the Gentle sunrise" shortcut so the whole arc
+// is visible in half a minute. Never used by a real alarm.
+export const DEMO_SUNRISE_S = 15;
+export const DEMO_BACKUP_S = 30;
 const MIN_VOLUME = 0.06;
 
-export default function GentleScreen({ onWake, onEscalate }: { onWake: () => void; onEscalate: () => void }) {
+export default function GentleScreen({ onWake, onEscalate, demo = false }: { onWake: () => void; onEscalate: () => void; demo?: boolean }) {
+  const sunriseS = demo ? DEMO_SUNRISE_S : SUNRISE_S;
+  const backupS = demo ? DEMO_BACKUP_S : BACKUP_S;
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const sunrise = useSharedValue(0); // 0 = night, 1 = dawn
   const breathe = useSharedValue(0);
-  const [secondsLeft, setSecondsLeft] = useState(BACKUP_S);
+  const [secondsLeft, setSecondsLeft] = useState(backupS);
   const [percent, setPercent] = useState(0);
 
   useOneShot(SOUNDS.yawn, 0.7);
@@ -28,27 +34,27 @@ export default function GentleScreen({ onWake, onEscalate }: { onWake: () => voi
 
   const escalated = useRef(false);
   useEffect(() => {
-    sunrise.value = withTiming(1, { duration: SUNRISE_S * 1000, easing: Easing.inOut(Easing.sin) });
+    sunrise.value = withTiming(1, { duration: sunriseS * 1000, easing: Easing.inOut(Easing.sin) });
     breathe.value = withRepeat(withTiming(1, { duration: 2600, easing: Easing.inOut(Easing.sin) }), -1, true);
     const start = Date.now();
     const id = setInterval(() => {
       const el = (Date.now() - start) / 1000;
-      const p = Math.min(1, el / SUNRISE_S);
+      const p = Math.min(1, el / sunriseS);
       try {
         bells.volume = MIN_VOLUME + (1 - MIN_VOLUME) * p;
       } catch {
         // player released while leaving the screen
       }
       setPercent(Math.round(p * 100));
-      setSecondsLeft(Math.max(0, Math.ceil(BACKUP_S - el)));
-      if (el >= BACKUP_S && !escalated.current) {
+      setSecondsLeft(Math.max(0, Math.ceil(backupS - el)));
+      if (el >= backupS && !escalated.current) {
         escalated.current = true;
         onEscalate();
       }
     }, 250);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [sunriseS, backupS]);
 
   const nightStyle = useAnimatedStyle(() => ({ opacity: 0.85 * (1 - sunrise.value) }));
   const sunStyle = useAnimatedStyle(() => ({ transform: [{ translateY: (1 - sunrise.value) * 160 }] }));

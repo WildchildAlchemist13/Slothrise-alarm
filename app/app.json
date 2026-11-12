@@ -11,6 +11,9 @@
       "bundleIdentifier": "com.slothrise.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "com.apple.developer.usernotifications.time-sensitive": true
       }
     },
     "android": {
@@ -36,7 +39,8 @@
       [
         "expo-audio",
         {
-          "recordAudioAndroid": false
+          "recordAudioAndroid": false,
+          "microphonePermission": false
         }
       ],
       [
@@ -45,6 +49,7 @@
           "icon": "./assets/android-icon-monochrome.png",
           "color": "#FF7A45",
           "defaultChannel": "alarm",
+          "enableRemoteNotifications": false,
           "sounds": [
             "./assets/sounds/alarm_chime.wav"
           ]

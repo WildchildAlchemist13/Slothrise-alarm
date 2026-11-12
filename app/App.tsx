@@ -31,6 +31,8 @@ export default function App() {
   const [activeAlarm, setActiveAlarm] = useState<Alarm | null>(null);
   // A new key each time remounts the screen, so its animations replay from the start.
   const [runId, setRunId] = useState(0);
+  // Gentle mode runs at the real 180 s / 300 s pace; only the dev shortcut uses the short demo.
+  const [gentleDemo, setGentleDemo] = useState(false);
   const stateRef = useRef<AppState | null>(null);
 
   const go = (s: Screen) => {
@@ -137,7 +139,14 @@ export default function App() {
               bedtime={state.bedtime}
               onToggleAlarm={toggleAlarm}
               onRing={() => ring(next?.alarm.id)}
-              onGentle={() => go('gentle')}
+              onGentle={() => {
+                setGentleDemo(false);
+                go('gentle');
+              }}
+              onGentleDemo={() => {
+                setGentleDemo(true);
+                go('gentle');
+              }}
               onRoutine={() => go('routine')}
             />
           )}
@@ -159,7 +168,7 @@ export default function App() {
               }}
             />
           )}
-          {screen === 'gentle' && <GentleScreen onWake={() => go('win')} onEscalate={() => go('ringing')} />}
+          {screen === 'gentle' && <GentleScreen demo={gentleDemo} onWake={() => go('win')} onEscalate={() => go('ringing')} />}
           {screen === 'win' && (
             <WinScreen
               streak={state.streak}

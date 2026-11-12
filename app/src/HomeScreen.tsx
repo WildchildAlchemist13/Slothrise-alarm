@@ -20,6 +20,8 @@ type Props = {
   onToggleAlarm: (id: string) => void;
   onRing: () => void;
   onGentle: () => void;
+  /** Dev-only: the same screen with the short demo timings. */
+  onGentleDemo: () => void;
   onRoutine: () => void;
 };
 
@@ -58,7 +60,7 @@ function useNow(intervalMs = 30_000) {
   return now;
 }
 
-function Day({ onRing, onGentle, onRoutine, streak, alarms, next, wins, onToggleAlarm, onNight }: Props & { onNight: () => void }) {
+function Day({ onRing, onGentleDemo, onRoutine, streak, alarms, next, wins, onToggleAlarm, onNight }: Props & { onNight: () => void }) {
   const insets = useSafeAreaInsets();
   const now = useNow();
   const peekW = 116;
@@ -151,7 +153,7 @@ function Day({ onRing, onGentle, onRoutine, streak, alarms, next, wins, onToggle
           <FlatCard style={{ gap: 2, marginTop: 6 }}>
             <Label>TRY IT</Label>
             <TextButton label={next ? `Ring the ${clock(next.alarm.hour, next.alarm.minute).time} alarm now` : 'Ring an alarm now'} onPress={onRing} />
-            <TextButton label="Play the Gentle sunrise" onPress={onGentle} />
+            <TextButton label="Play the Gentle sunrise" onPress={onGentleDemo} />
           </FlatCard>
         ) : null}
       </ScrollView>
