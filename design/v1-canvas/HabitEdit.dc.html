@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Add habit</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#FFD93D}a:hover{color:#FFE680}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding-top: 44px; background: #07050E; color: #FBF7FF; font-family: Manrope, 'Segoe UI', system-ui, sans-serif; position: relative; overflow: hidden; display: flex; flex-direction: column;">
+  <form style="flex-grow: 1; margin: 0; background: #1A1530; border-radius: 30px 30px 0 0; border: 1px solid rgba(255,255,255,0.1); border-bottom: 0; padding: 10px 18px 26px; display: flex; flex-direction: column; gap: 16px;">
+    <span style="width: 44px; height: 5px; border-radius: 9px; background: #272043; align-self: center;"></span>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <a href="Routine.dc.html" style="color: #B7AECF; font-weight: 800; text-decoration: none; padding: 8px 4px;">Cancel</a>
+      <h1 style="margin: 0; font-family: 'Fredoka', sans-serif; font-size: 20px; font-weight: 700;">New habit</h1>
+      <span style="width: 52px;"></span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span style="width: 64px; height: 64px; border-radius: 20px; background: #3EE6B0; color: #1B0F24; display: grid; place-items: center; flex: none;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"></path><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"></path></svg></span>
+      <div style="flex: 1; display: flex; flex-direction: column; gap: 6px;">
+        <label for="habitName" style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #B7AECF;">NAME</label>
+        <input id="habitName" value="Read 10 pages" style="background: #272043; border: 1px solid #FF4D8D; border-radius: 14px; padding: 11px 14px; font: inherit; font-weight: 600; color: #FBF7FF;">
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #B7AECF;">COLOUR</span>
+      <div style="display: flex; gap: 10px;">
+        <button type="button" aria-label="Mint" aria-pressed="true" style="width: 38px; height: 38px; border-radius: 50%; border: 3px solid #FBF7FF; background: #3EE6B0;"></button>
+        <button type="button" aria-label="Yellow" aria-pressed="false" style="width: 38px; height: 38px; border-radius: 50%; border: 0; background: #FFD93D;"></button>
+        <button type="button" aria-label="Pink" aria-pressed="false" style="width: 38px; height: 38px; border-radius: 50%; border: 0; background: #FF4D8D;"></button>
+        <button type="button" aria-label="Orange" aria-pressed="false" style="width: 38px; height: 38px; border-radius: 50%; border: 0; background: #FF8A3D;"></button>
+        <button type="button" aria-label="Blue" aria-pressed="false" style="width: 38px; height: 38px; border-radius: 50%; border: 0; background: #5BA8FF;"></button>
+        <button type="button" aria-label="Violet" aria-pressed="false" style="width: 38px; height: 38px; border-radius: 50%; border: 0; background: #B84DFF;"></button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #B7AECF;">WHEN</span>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; font-size: 13px; font-weight: 800;">
+        <button type="button" aria-pressed="true" style="font: inherit; height: 44px; border-radius: 13px; border: 1.5px solid #FFD93D; background: rgba(255,217,61,0.12); color: #FFD93D;">After waking</button>
+        <button type="button" aria-pressed="false" style="font: inherit; height: 44px; border-radius: 13px; border: 1.5px solid transparent; background: #272043; color: #B7AECF;">Morning</button>
+        <button type="button" aria-pressed="false" style="font: inherit; height: 44px; border-radius: 13px; border: 1.5px solid transparent; background: #272043; color: #B7AECF;">Bedtime</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+      <span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #B7AECF;">GOAL</span>
+      <div style="display: flex; align-items: center; justify-content: space-between; background: #272043; border-radius: 14px; padding: 8px 10px 8px 14px;">
+        <span style="font-weight: 700;">Days a week</span>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <button type="button" aria-label="Fewer days" style="width: 36px; height: 36px; border-radius: 10px; border: 0; background: #1A1530; color: #FBF7FF; font-size: 20px; font-weight: 800;">−</button>
+          <b style="font-family: 'Fredoka', sans-serif; font-size: 22px;">5</b>
+          <button type="button" aria-label="More days" style="width: 36px; height: 36px; border-radius: 10px; border: 0; background: #1A1530; color: #FBF7FF; font-size: 20px; font-weight: 800;">+</button>
+        </div>
+      </div>
+      <span style="font-size: 12.5px; color: #B7AECF;">Streaks count your goal days, so a rest day won’t break it.</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 10px; background: #272043; border-radius: 16px; padding: 8px 14px;">
+      <img src="/_blob/84f50201f6cea02015f553e344d5ed31" alt="Snooze" style="width: 46px; height: auto; flex: none;">
+      <span style="font-size: 13px; font-weight: 600;">Small beats heroic. 10 pages a day is a book a month.</span>
+    </div>
+
+    <a href="Routine.dc.html" style="margin-top: auto; height: 56px; border-radius: 18px; background: #3EE6B0; color: #1B0F24; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 18px; display: flex; align-items: center; justify-content: center; text-decoration: none;">Add habit</a>
+  </form>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

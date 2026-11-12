@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Math mission</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#FFD93D}a:hover{color:#FFE680}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 64px 18px 30px; background: linear-gradient(165deg, #FF7A59, #FFC15E); color: #1B0F24; font-family: Manrope, 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; gap: 18px;">
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; padding: 0 6px;">
+    <div style="display: flex; flex-direction: column;">
+      <span style="font-size: 12px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;">Still ringing</span>
+      <span style="font-family: 'Fredoka', sans-serif; font-weight: 800; font-size: 48px; line-height: 1; letter-spacing: -0.04em;">7:15</span>
+    </div>
+    <span style="display: inline-flex; align-items: center; gap: 6px; background: rgba(27,15,36,0.88); color: #FBF7FF; border-radius: 999px; padding: 6px 12px; font-size: 13px; font-weight: 800;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FFD93D" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"></path></svg>
+      Sound on until solved
+    </span>
+  </div>
+
+  <div style="flex-grow: 1; background: #1B0F24; color: #FBF7FF; border-radius: 28px; padding: 20px 18px 18px; display: flex; flex-direction: column; gap: 14px;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h1 style="margin: 0; font-family: 'Fredoka', sans-serif; font-size: 21px; font-weight: 800;">Solve to wake up</h1>
+      <div style="display: flex; gap: 5px;" aria-label="Problem 2 of 3">
+        <span style="width: 24px; height: 6px; border-radius: 3px; background: #FFD93D;"></span>
+        <span style="width: 24px; height: 6px; border-radius: 3px; background: #FFD93D;"></span>
+        <span style="width: 24px; height: 6px; border-radius: 3px; background: #272043;"></span>
+      </div>
+    </div>
+    <div style="font-family: 'Fredoka', sans-serif; font-weight: 800; font-size: 64px; text-align: center; letter-spacing: -0.04em; line-height: 1.1; padding-top: 6px;">7 × 13</div>
+    <output style="height: 64px; border-radius: 18px; background: #272043; border: 2px solid #FFD93D; display: grid; place-items: center; font-family: 'Fredoka', sans-serif; font-weight: 800; font-size: 36px;">91</output>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: auto; font-family: 'Fredoka', sans-serif; font-weight: 800; font-size: 26px;">
+      <button type="button" style="font: inherit; color: inherit; height: 62px; border-radius: 16px; border: 0; background: #272043;">1</button>
+      <button type="button" style="font: inherit; color: inherit; height: 62px; border-radius: 16px; border: 0; background: #272043;">2</button>
+      <button type="button" style="font: inherit; color: inherit; height: 62px; border-radius: 16px; border: 0; background: #272043;">3</button>
+      <button type="button" style="font: inherit; color: inherit; height: 62px; border-radius: 16px; border: 0; background: #272043;">4</button>
+      <button type="button" style="font: inherit; color: inherit; height: 62px; border-radius: 16px; border: 0; background: #272043;">5</button>
+      <button type="button" style="font: inherit; color: inherit; height: 62px; border-radius: 16px; border: 0; background: #272043;">6</button>
+      <button type="button" style="font: inherit; color: inherit; height: 62px; border-radius: 16px; border: 0; background: #272043;">7</button>
+      <button type="button" style="font: inherit; color: inherit; height: 62px; border-radius: 16px; border: 0; background: #272043;">8</button>
+      <button type="button" style="font: inherit; color: inherit; height: 62px; border-radius: 16px; border: 0; background: #272043;">9</button>
+      <button type="button" aria-label="Delete" style="font: inherit; color: inherit; height: 62px; border-radius: 16px; border: 0; background: #272043; display: grid; place-items: center;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h11v14H9l-6-7zM12 9l5 6M17 9l-5 6"></path></svg></button>
+      <button type="button" style="font: inherit; color: inherit; height: 62px; border-radius: 16px; border: 0; background: #272043;">0</button>
+      <a href="WakeWin.dc.html" aria-label="Check answer" style="height: 62px; border-radius: 16px; background: #3EE6B0; color: #1B0F24; display: grid; place-items: center; text-decoration: none;"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l5 5L20 7"></path></svg></a>
+    </div>
+  </div>
+  <span style="text-align: center; font-size: 13px; font-weight: 700;">A wrong answer shakes the field and gives a new sum</span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

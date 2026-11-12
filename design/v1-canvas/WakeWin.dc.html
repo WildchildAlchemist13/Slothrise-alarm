@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wake win</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#FFD93D}a:hover{color:#FFE680}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 80px 22px 34px; background: #0E0B1A; color: #FBF7FF; font-family: Manrope, 'Segoe UI', system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center; position: relative; overflow: hidden;">
+  <div style="position: absolute; width: 420px; height: 420px; border-radius: 50%; left: -15px; top: -120px; background: #FF8A3D; filter: blur(90px); opacity: 0.55;"></div>
+  <span style="position: absolute; left: 40px; top: 120px; width: 12px; height: 6px; background: #FF4D8D; transform: rotate(30deg);"></span>
+  <span style="position: absolute; left: 310px; top: 96px; width: 12px; height: 6px; background: #3EE6B0; transform: rotate(-20deg);"></span>
+  <span style="position: absolute; left: 290px; top: 230px; width: 10px; height: 5px; background: #FFD93D; transform: rotate(60deg);"></span>
+  <span style="position: absolute; left: 70px; top: 260px; width: 10px; height: 5px; background: #7B9CFF; transform: rotate(-45deg);"></span>
+  <span style="position: absolute; left: 190px; top: 60px; width: 10px; height: 5px; background: #FFD93D; transform: rotate(15deg);"></span>
+
+  <div style="width: 132px; height: 132px; border-radius: 50%; background: linear-gradient(140deg, #FFD93D, #FF8A3D); color: #1B0F24; display: grid; place-items: center; position: relative; box-shadow: 0 0 0 18px rgba(255,217,61,0.14);">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 6px; position: relative;">
+    <h1 style="margin: 0; font-family: 'Fredoka', sans-serif; font-weight: 800; font-size: 48px; line-height: 1; letter-spacing: -0.04em;">You’re up.</h1>
+    <p style="margin: 0; font-size: 15.5px; color: #B7AECF;">Mission done in 48 seconds. No snooze.</p>
+  </div>
+
+  <div style="width: 100%; background: #1A1530; border: 1px solid rgba(255,138,61,0.5); border-radius: 22px; padding: 16px; display: flex; flex-direction: column; gap: 12px; position: relative;">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 8px; color: #FF8A3D;">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5 1-8.5z"></path></svg>
+      <span style="font-family: 'Fredoka', sans-serif; font-weight: 800; font-size: 30px; letter-spacing: -0.02em;">7 day streak</span>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; font-size: 11.5px; font-weight: 800; color: #B7AECF;">
+      <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;"><span style="width: 100%; height: 30px; border-radius: 9px; background: #3EE6B0;"></span>F</div>
+      <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;"><span style="width: 100%; height: 30px; border-radius: 9px; background: #3EE6B0;"></span>S</div>
+      <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;"><span style="width: 100%; height: 30px; border-radius: 9px; background: #3EE6B0;"></span>S</div>
+      <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;"><span style="width: 100%; height: 30px; border-radius: 9px; background: #3EE6B0;"></span>M</div>
+      <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;"><span style="width: 100%; height: 30px; border-radius: 9px; background: #3EE6B0;"></span>T</div>
+      <div style="display: flex; flex-direction: column; gap: 4px; align-items: center;"><span style="width: 100%; height: 30px; border-radius: 9px; background: #3EE6B0;"></span>W</div>
+      <div style="display: flex; flex-direction: column; gap: 4px; align-items: center; color: #FBF7FF;"><span style="width: 100%; height: 30px; border-radius: 9px; background: linear-gradient(140deg, #FFD93D, #FF8A3D);"></span>T</div>
+    </div>
+    <span style="font-size: 13px; color: #B7AECF;">Your best is 12 days. Five more to beat it.</span>
+  </div>
+
+  <div style="width: 100%; margin-top: auto; display: flex; flex-direction: column; gap: 10px; position: relative;">
+    <a href="Routine.dc.html" style="height: 58px; border-radius: 18px; background: linear-gradient(120deg, #FF4D8D, #FF8A3D 55%, #FFD93D); color: #1B0F24; font-family: 'Fredoka', sans-serif; font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; text-decoration: none;">Start morning routine · 5 habits</a>
+    <a href="Home.dc.html" style="height: 54px; border-radius: 18px; background: #272043; color: #FBF7FF; font-family: 'Fredoka', sans-serif; font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center; text-decoration: none;">Done</a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

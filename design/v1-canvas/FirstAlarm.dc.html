@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>First alarm</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#FFD93D}a:hover{color:#FFE680}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 60px 22px 34px; background: #0E0B1A; color: #FBF7FF; font-family: Manrope, 'Segoe UI', system-ui, sans-serif; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 18px;">
+  <div style="display: flex; gap: 6px;">
+    <span style="width: 26px; height: 6px; border-radius: 3px; background: #FFD93D;"></span>
+    <span style="width: 26px; height: 6px; border-radius: 3px; background: #FFD93D;"></span>
+    <span style="width: 26px; height: 6px; border-radius: 3px; background: #FFD93D;"></span>
+  </div>
+  <div style="display: flex; flex-direction: column; gap: 6px;">
+    <span style="font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #FFD93D;">Step 3 of 3</span>
+    <h1 style="margin: 0; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 36px; line-height: 1.05;">When should I wake you tomorrow?</h1>
+  </div>
+
+  <div style="border-radius: 26px; background: linear-gradient(150deg, #FF7A59, #FFC15E); color: #1B0F24; padding: 18px 20px 14px; display: flex; flex-direction: column; align-items: center; gap: 4px; position: relative;">
+    <span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;">Dawn</span>
+    <div style="display: flex; align-items: center; gap: 14px; font-family: 'Fredoka', sans-serif; font-weight: 700;">
+      <div style="display: flex; flex-direction: column; align-items: center; line-height: 1;">
+        <span style="font-size: 30px; opacity: 0.35;">5</span><span style="font-size: 76px;">6</span><span style="font-size: 30px; opacity: 0.35;">7</span>
+      </div>
+      <span style="font-size: 64px;">:</span>
+      <div style="display: flex; flex-direction: column; align-items: center; line-height: 1;">
+        <span style="font-size: 30px; opacity: 0.35;">15</span><span style="font-size: 76px;">30</span><span style="font-size: 30px; opacity: 0.35;">45</span>
+      </div>
+      <span style="font-size: 26px; align-self: center;">am</span>
+    </div>
+    <span style="font-size: 13px; font-weight: 700;">That’s 8 h 15 min of sleep if you’re in bed by 10:15 pm</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px;">
+    <span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #B7AECF;">HOW SHOULD I WAKE YOU?</span>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px;">
+      <button type="button" aria-pressed="true" style="font: inherit; color: inherit; text-align: left; border: 2px solid #FFD93D; background: rgba(255,217,61,0.12); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 2px;"><b style="font-size: 15px;">Gentle</b><span style="font-size: 12.5px; color: #B7AECF;">Slow sunrise, then a mission if you stay in bed</span></button>
+      <button type="button" aria-pressed="false" style="font: inherit; color: inherit; text-align: left; border: 2px solid transparent; background: #1A1530; border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 2px;"><b style="font-size: 15px;">Mission</b><span style="font-size: 12.5px; color: #B7AECF;">Straight to the math. No mercy.</span></button>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 10px; background: #1A1530; border-radius: 16px; padding: 10px 14px;">
+    <img src="/_blob/b4bae579bb8a3c7a6f1d4d14522cee79" alt="Snooze cheering" style="width: 56px; height: auto; flex: none;">
+    <span style="font-size: 13.5px; font-weight: 600;">Weekdays to start. You can add weekends, habits and more alarms later.</span>
+  </div>
+
+  <a href="Home.dc.html" style="margin-top: auto; height: 58px; border-radius: 18px; background: linear-gradient(120deg, #FF4D8D, #FF8A3D 55%, #FFD93D); color: #1B0F24; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 19px; display: flex; align-items: center; justify-content: center; text-decoration: none;">Set my first alarm</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

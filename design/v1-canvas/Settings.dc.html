@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#FFD93D}a:hover{color:#FFE680}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 56px 18px 24px; background: #0E0B1A; color: #FBF7FF; font-family: Manrope, 'Segoe UI', system-ui, sans-serif; position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 14px;">
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <a href="Home.dc.html" aria-label="Back" style="width: 40px; height: 40px; border-radius: 12px; background: #1A1530; color: #FBF7FF; display: grid; place-items: center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+    <h1 style="margin: 0; font-family: 'Fredoka', sans-serif; font-size: 30px; font-weight: 700;">Settings</h1>
+  </div>
+
+  <a href="Paywall.dc.html" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 18px; background: linear-gradient(120deg, #6B3DF0, #C46BFF); color: #FBF7FF; text-decoration: none;">
+    <img src="/_blob/b4bae579bb8a3c7a6f1d4d14522cee79" alt="" style="width: 48px; height: auto; flex: none;">
+    <div style="flex: 1;"><b style="font-family: 'Fredoka', sans-serif; font-size: 18px;">Free plan</b><div style="font-size: 12.5px;">Unlock every mission and streak freezes</div></div>
+    <span style="background: #FFD93D; color: #1B0F24; border-radius: 999px; padding: 7px 12px; font-size: 13px; font-weight: 800;">Upgrade</span>
+  </a>
+
+  <span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #B7AECF; margin-top: 2px;">WAKE-UP DEFAULTS</span>
+  <div style="background: #1A1530; border-radius: 18px; display: flex; flex-direction: column;">
+    <button type="button" style="font: inherit; color: inherit; background: none; border: 0; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 13px 14px; display: flex; justify-content: space-between; text-align: left;"><span style="font-weight: 700;">Wake style</span><span style="color: #B7AECF;">Gentle ›</span></button>
+    <button type="button" style="font: inherit; color: inherit; background: none; border: 0; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 13px 14px; display: flex; justify-content: space-between; text-align: left;"><span style="font-weight: 700;">Mission</span><span style="color: #B7AECF;">Math · Medium ›</span></button>
+    <button type="button" style="font: inherit; color: inherit; background: none; border: 0; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 13px 14px; display: flex; justify-content: space-between; text-align: left;"><span style="font-weight: 700;">Sunrise length</span><span style="color: #B7AECF;">3 min ›</span></button>
+    <button type="button" style="font: inherit; color: inherit; background: none; border: 0; padding: 13px 14px; display: flex; justify-content: space-between; text-align: left;"><span style="font-weight: 700;">Mission starts after</span><span style="color: #B7AECF;">5 min in bed ›</span></button>
+  </div>
+
+  <span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #B7AECF; margin-top: 2px;">SOUND</span>
+  <div style="background: #1A1530; border-radius: 18px; display: flex; flex-direction: column;">
+    <div style="padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; flex-direction: column; gap: 8px;">
+      <label for="vol" style="display: flex; justify-content: space-between; font-weight: 700;"><span>Max volume</span><span style="color: #B7AECF;">80%</span></label>
+      <input id="vol" type="range" min="0" max="100" value="80" style="width: 100%; accent-color: #FFD93D;">
+    </div>
+    <div style="padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center;"><span style="font-weight: 700;">Vibrate</span><button type="button" role="switch" aria-checked="true" aria-label="Vibrate" style="width: 52px; height: 30px; border-radius: 999px; border: 0; background: #3EE6B0; position: relative;"><span style="position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; background: #fff;"></span></button></div>
+    <div style="padding: 11px 14px; display: flex; justify-content: space-between; align-items: center;"><span style="font-weight: 700;">Ring through Focus</span><button type="button" role="switch" aria-checked="true" aria-label="Ring through Focus" style="width: 52px; height: 30px; border-radius: 999px; border: 0; background: #3EE6B0; position: relative;"><span style="position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border-radius: 50%; background: #fff;"></span></button></div>
+  </div>
+
+  <span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #B7AECF; margin-top: 2px;">MORE</span>
+  <div style="background: #1A1530; border-radius: 18px; display: flex; flex-direction: column;">
+    <a href="Permissions.dc.html" style="color: #FBF7FF; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 13px 14px; display: flex; justify-content: space-between;"><span style="font-weight: 700;">Alarm health check</span><span style="color: #3EE6B0; font-weight: 800;">All good ›</span></a>
+    <button type="button" style="font: inherit; color: inherit; background: none; border: 0; padding: 13px 14px; display: flex; justify-content: space-between; text-align: left;"><span style="font-weight: 700;">Bedtime reminder</span><span style="color: #B7AECF;">10:15 pm ›</span></button>
+  </div>
+  <span style="text-align: center; font-size: 12px; color: #B7AECF; margin-top: auto;">Slothrise 1.0 · made slowly, with love</span>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

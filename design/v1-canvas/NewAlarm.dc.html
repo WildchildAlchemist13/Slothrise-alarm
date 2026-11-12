@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>New alarm</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Manrope:wght@500;600;700;800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#FFD93D}a:hover{color:#FFE680}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding-top: 44px; background: #07050E; color: #FBF7FF; font-family: Manrope, 'Segoe UI', system-ui, sans-serif; position: relative; overflow: hidden; display: flex; flex-direction: column;">
+  <form style="flex-grow: 1; margin: 0; background: #1A1530; border-radius: 30px 30px 0 0; border: 1px solid rgba(255,255,255,0.1); border-bottom: 0; padding: 10px 18px 26px; display: flex; flex-direction: column; gap: 14px;">
+    <span style="width: 44px; height: 5px; border-radius: 9px; background: #272043; align-self: center;"></span>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <a href="Home.dc.html" style="color: #B7AECF; font-weight: 800; text-decoration: none; padding: 8px 4px;">Cancel</a>
+      <h1 style="margin: 0; font-family: 'Fredoka', sans-serif; font-size: 20px; font-weight: 800;">New alarm</h1>
+      <a href="Ringing.dc.html" style="color: #FFD93D; font-weight: 800; text-decoration: none; padding: 8px 4px;">Try it</a>
+    </div>
+
+    <div style="border-radius: 20px; padding: 12px 18px; background: linear-gradient(130deg, #FF7A59, #FFC15E); color: #1B0F24; display: flex; justify-content: space-between; align-items: center;">
+      <label for="alarmTime" style="font-family: 'Fredoka', sans-serif; font-weight: 800; font-size: 56px; line-height: 1; letter-spacing: -0.045em;">6:30<span style="font-size: 18px; letter-spacing: 0; margin-left: 4px;">am</span></label>
+      <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; background: rgba(27,15,36,0.88); color: #FBF7FF; padding: 5px 10px; border-radius: 999px;">Dawn</span>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <label for="alarmLabel" style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #B7AECF;">LABEL</label>
+      <input id="alarmLabel" value="Gym before the chaos" style="background: #272043; border: 1px solid transparent; border-radius: 14px; padding: 11px 14px; font: inherit; font-weight: 600; color: #FBF7FF;">
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #B7AECF;">WAKE-UP MISSION</span>
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px;">
+        <button type="button" aria-pressed="false" style="font: inherit; color: #B7AECF; background: #272043; border: 1.5px solid transparent; border-radius: 14px; padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; font-weight: 800;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"></rect><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"></path></svg>Math</button>
+        <button type="button" aria-pressed="false" style="font: inherit; color: #B7AECF; background: #272043; border: 1.5px solid transparent; border-radius: 14px; padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; font-weight: 800;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><rect x="14" y="14" width="6" height="6" rx="1"></rect></svg>Memory</button>
+        <button type="button" aria-pressed="false" style="font: inherit; color: #B7AECF; background: #272043; border: 1.5px solid transparent; border-radius: 14px; padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; font-weight: 800;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"></rect><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"></path></svg>Type</button>
+        <button type="button" aria-pressed="true" style="font: inherit; color: #FFD93D; background: rgba(255,217,61,0.12); border: 1.5px solid #FFD93D; border-radius: 14px; padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; font-weight: 800;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="4"></circle><circle cx="12" cy="12" r="1"></circle></svg>Tap</button>
+        <button type="button" aria-pressed="false" style="font: inherit; color: #B7AECF; background: #272043; border: 1.5px solid transparent; border-radius: 14px; padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 12px; font-weight: 800;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 13V5a1.5 1.5 0 0 1 3 0v6M11 11V4a1.5 1.5 0 0 1 3 0v7M14 11V6a1.5 1.5 0 0 1 3 0v7c0 4-3 7-7 7s-6-3-7-6l-1-3a1.5 1.5 0 0 1 2.6-1.4L8 14"></path></svg>Hold</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #B7AECF;">REPEAT</span>
+      <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; font-weight: 800;">
+        <button type="button" aria-pressed="false" aria-label="Sunday" style="font: inherit; height: 42px; border-radius: 13px; border: 0; background: #272043; color: #B7AECF;">S</button>
+        <button type="button" aria-pressed="true" aria-label="Monday" style="font: inherit; height: 42px; border-radius: 13px; border: 0; background: linear-gradient(140deg, #FF7A59, #FFC15E); color: #1B0F24;">M</button>
+        <button type="button" aria-pressed="false" aria-label="Tuesday" style="font: inherit; height: 42px; border-radius: 13px; border: 0; background: #272043; color: #B7AECF;">T</button>
+        <button type="button" aria-pressed="true" aria-label="Wednesday" style="font: inherit; height: 42px; border-radius: 13px; border: 0; background: linear-gradient(140deg, #FF7A59, #FFC15E); color: #1B0F24;">W</button>
+        <button type="button" aria-pressed="false" aria-label="Thursday" style="font: inherit; height: 42px; border-radius: 13px; border: 0; background: #272043; color: #B7AECF;">T</button>
+        <button type="button" aria-pressed="true" aria-label="Friday" style="font: inherit; height: 42px; border-radius: 13px; border: 0; background: linear-gradient(140deg, #FF7A59, #FFC15E); color: #1B0F24;">F</button>
+        <button type="button" aria-pressed="false" aria-label="Saturday" style="font: inherit; height: 42px; border-radius: 13px; border: 0; background: #272043; color: #B7AECF;">S</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px;">
+      <span style="font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; color: #B7AECF;">SOUND</span>
+      <div style="display: flex; gap: 6px; flex-wrap: wrap; font-size: 13px; font-weight: 800;">
+        <button type="button" aria-pressed="true" style="font: inherit; border-radius: 999px; padding: 8px 14px; border: 1.5px solid #FFD93D; background: rgba(255,217,61,0.12); color: #FFD93D;">Sunrise chime</button>
+        <button type="button" aria-pressed="false" style="font: inherit; border-radius: 999px; padding: 8px 14px; border: 1.5px solid transparent; background: #272043; color: #B7AECF;">Retro beep</button>
+        <button type="button" aria-pressed="false" style="font: inherit; border-radius: 999px; padding: 8px 14px; border: 1.5px solid transparent; background: #272043; color: #B7AECF;">Bubble pop</button>
+        <button type="button" aria-pressed="false" style="font: inherit; border-radius: 999px; padding: 8px 14px; border: 1.5px solid transparent; background: #272043; color: #B7AECF;">Temple bells</button>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #272043; border-radius: 14px; padding: 10px 12px 10px 14px;">
+      <div style="display: flex; flex-direction: column;"><b style="font-size: 14px;">Allow snooze</b><span style="font-size: 12px; color: #B7AECF;">Snoozing resets your wake streak</span></div>
+      <button type="button" role="switch" aria-checked="false" aria-label="Allow snooze" style="width: 56px; height: 32px; border-radius: 999px; border: 0; background: #3A3160; position: relative; flex: none;"><span style="position: absolute; top: 4px; left: 4px; width: 24px; height: 24px; border-radius: 50%; background: #B7AECF;"></span></button>
+    </div>
+
+    <a href="Home.dc.html" style="margin-top: auto; height: 56px; border-radius: 18px; background: linear-gradient(120deg, #FF7A59, #FFC15E); color: #1B0F24; font-family: 'Fredoka', sans-serif; font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; text-decoration: none;">Save · rings in 8 h 49 min</a>
+  </form>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
