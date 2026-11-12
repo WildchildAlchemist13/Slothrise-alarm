@@ -1,4 +1,4 @@
-// Alarm sounds. All three are synthesised (scratchpad tools/sounds.py), so there are no licences to clear.
+// Alarm sounds. All three are synthesised (tools/sounds.py at the repo root), so there are no licences to clear.
 import { useEffect } from 'react';
 import { setAudioModeAsync, useAudioPlayer, type AudioPlayer } from 'expo-audio';
 
