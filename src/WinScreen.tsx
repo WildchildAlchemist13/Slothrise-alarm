@@ -1,7 +1,7 @@
-// Wake win: Snooze lets go of the branch, lands with a squash, and hops with a streak flame.
-// Confetti bursts, the streak ticks up, and today's cell fills in on the week strip.
+// Wake win: the earned moment. A sunburst turns behind Snooze, who drops in cheering and keeps hopping.
+// Confetti bursts, the streak ticks up, today's cell fills, and the routine is the next step.
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Image, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
   Extrapolation,
@@ -18,206 +18,172 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { SnoozeArms, SnoozeBody, SnoozeFlame, SnoozeHead, VIEWBOX } from './Snooze';
-import { BRAND } from './sky';
-import { ui } from './ui';
+import Svg, { Circle, Path } from 'react-native-svg';
+import { Icon } from './Scenery';
+import { Card, TactileButton, TextButton } from './Tactile';
+import { C, F, OUTLINE, POSE_RATIO, POSES } from './theme';
 
-const START_STREAK = 6;
 const DAYS = ['F', 'S', 'S', 'M', 'T', 'W', 'T'];
-const COLORS = ['#FF4D8D', '#FFD93D', '#3EE6B0', '#FF8A3D', '#7B9CFF', '#FFF4E2'];
+const COLORS = [C.sunrise, C.sun, C.leaf, C.sky, C.lilac];
+const FLAME = 'M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5 1-8.5z';
 
-type Piece = { x0: number; y0: number; vx: number; vy: number; r0: number; vr: number; w: number; h: number; c: string };
+type Piece = { x0: number; y0: number; vx: number; vy: number; r0: number; vr: number; c: string };
 
 function ConfettiPiece({ t, p }: { t: SharedValue<number>; p: Piece }) {
   const style = useAnimatedStyle(() => {
     const s = t.value;
     return {
       opacity: s <= 0 ? 0 : s < 2.4 ? 1 : Math.max(0, 1 - (s - 2.4) * 2),
-      transform: [
-        { translateX: p.x0 + p.vx * s },
-        { translateY: p.y0 + p.vy * s + 520 * s * s },
-        { rotate: `${p.r0 + p.vr * s}rad` },
-      ],
+      transform: [{ translateX: p.x0 + p.vx * s }, { translateY: p.y0 + p.vy * s + 520 * s * s }, { rotate: `${p.r0 + p.vr * s}rad` }],
     };
   });
-  return <Animated.View pointerEvents="none" style={[styles.piece, { width: p.w, height: p.h, backgroundColor: p.c }, style]} />;
+  return <Animated.View pointerEvents="none" style={[styles.piece, { backgroundColor: p.c }, style]} />;
 }
 
-export default function WinScreen({ onAgain, onDone }: { onAgain: () => void; onDone: () => void }) {
+/** Sunburst: alternating sun-coloured wedges in an outlined circle. */
+function Sunburst({ size }: { size: number }) {
+  const r = size / 2;
+  const wedges = Array.from({ length: 15 }, (_, i) => {
+    const a0 = (i * 2 * Math.PI) / 15, a1 = a0 + Math.PI / 15;
+    return `M${r} ${r}L${r + r * Math.cos(a0)} ${r + r * Math.sin(a0)}A${r} ${r} 0 0 1 ${r + r * Math.cos(a1)} ${r + r * Math.sin(a1)}Z`;
+  });
+  return (
+    <Svg width={size} height={size}>
+      <Circle cx={r} cy={r} r={r - 1.5} fill={C.sunSoft} />
+      {wedges.map((d, i) => (
+        <Path key={i} d={d} fill={C.sun} />
+      ))}
+      <Circle cx={r} cy={r} r={r - 1.5} fill="none" stroke={C.ink} strokeWidth={OUTLINE} />
+      <Circle cx={r} cy={r} r={r * 0.6} fill={C.sun} stroke={C.ink} strokeWidth={OUTLINE} />
+    </Svg>
+  );
+}
+
+export default function WinScreen({ streakBefore, onRoutine, onDone }: { streakBefore: number; onRoutine: () => void; onDone: () => void }) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const size = Math.min(width * 0.6, 260);
-  const slothH = (size * VIEWBOX.h) / VIEWBOX.w;
-  const slothTop = insets.top + height * 0.06;
+  const burst = Math.min(width * 0.72, 290);
+  const poseW = burst * 0.78;
+  const poseH = poseW / POSE_RATIO.celebrate;
+  const stageTop = insets.top + 18;
 
   const drop = useSharedValue(-height * 0.5);
   const hop = useSharedValue(0);
   const squash = useSharedValue(1);
-  const flame = useSharedValue(0);
+  const spin = useSharedValue(0);
   const confetti = useSharedValue(0);
   const reveal = useSharedValue(0);
-  const todayCell = useSharedValue(0);
-  const streakPop = useSharedValue(1);
-  const [streak, setStreak] = useState(START_STREAK);
+  const today = useSharedValue(0);
+  const pop = useSharedValue(1);
+  const [streak, setStreak] = useState(streakBefore);
 
   const pieces = useMemo<Piece[]>(
     () =>
-      Array.from({ length: 48 }, (_, i) => {
-        const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.4;
-        const sp = 380 + Math.random() * 420;
-        return {
-          x0: width / 2,
-          y0: slothTop + slothH * 0.35,
-          vx: Math.cos(a) * sp,
-          vy: Math.sin(a) * sp,
-          r0: Math.random() * 6,
-          vr: (Math.random() - 0.5) * 14,
-          w: 7 + Math.random() * 6,
-          h: 4 + Math.random() * 4,
-          c: COLORS[i % COLORS.length],
-        };
+      Array.from({ length: 44 }, (_, i) => {
+        const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.4, sp = 380 + Math.random() * 420;
+        return { x0: width / 2, y0: stageTop + burst * 0.45, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r0: Math.random() * 6, vr: (Math.random() - 0.5) * 14, c: COLORS[i % COLORS.length] };
       }),
-    [width, slothTop, slothH],
+    [width, stageTop, burst],
   );
 
   const onLand = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     setTimeout(() => {
-      setStreak(START_STREAK + 1);
-      streakPop.value = withSequence(withTiming(1.35, { duration: 140 }), withSpring(1, { damping: 7 }));
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      setStreak(streakBefore + 1);
+      pop.value = withSequence(withTiming(1.3, { duration: 140 }), withSpring(1, { damping: 7 }));
     }, 450);
-  }, [streakPop]);
+  }, [pop, streakBefore]);
 
   useEffect(() => {
-    // 1. let go and fall
-    drop.value = withTiming(0, { duration: 560, easing: Easing.in(Easing.quad) }, (done) => {
+    spin.value = withRepeat(withTiming(1, { duration: 24000, easing: Easing.linear }), -1, false);
+    drop.value = withTiming(0, { duration: 520, easing: Easing.in(Easing.quad) }, (done) => {
       if (!done) return;
-      // 2. squash on landing, then spring back
-      squash.value = withSequence(withTiming(0.72, { duration: 70 }), withSpring(1, { damping: 6, stiffness: 260 }));
-      // 3. confetti, words, today's cell
+      squash.value = withSequence(withTiming(0.74, { duration: 70 }), withSpring(1, { damping: 6, stiffness: 260 }));
       confetti.value = withTiming(3.2, { duration: 3200, easing: Easing.linear });
       reveal.value = withDelay(150, withTiming(1, { duration: 450, easing: Easing.out(Easing.cubic) }));
-      todayCell.value = withDelay(450, withSpring(1, { damping: 8 }));
-      // 4. keep hopping
-      hop.value = withDelay(
-        650,
-        withRepeat(
-          withSequence(
-            withTiming(-30, { duration: 320, easing: Easing.out(Easing.quad) }),
-            withTiming(0, { duration: 320, easing: Easing.in(Easing.quad) }),
-          ),
-          -1,
-          false,
-        ),
-      );
+      today.value = withDelay(450, withSpring(1, { damping: 8 }));
+      hop.value = withDelay(700, withRepeat(withSequence(withTiming(-22, { duration: 340, easing: Easing.out(Easing.quad) }), withTiming(0, { duration: 340, easing: Easing.in(Easing.quad) })), -1, false));
       scheduleOnRN(onLand);
     });
-    flame.value = withRepeat(withTiming(1, { duration: 180, easing: Easing.inOut(Easing.quad) }), -1, true);
-  }, [drop, squash, confetti, reveal, todayCell, hop, flame, onLand]);
+  }, [drop, squash, confetti, reveal, today, hop, spin, onLand]);
 
-  const slothStyle = useAnimatedStyle(() => {
-    // squash when touching the ground, stretch a little in the air
-    const air = interpolate(hop.value, [-30, -8, 0], [1, 1.02, 0.93], Extrapolation.CLAMP);
+  const spinStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${spin.value * 360}deg` }] }));
+  const poseStyle = useAnimatedStyle(() => {
+    const air = interpolate(hop.value, [-22, -6, 0], [1, 1.02, 0.94], Extrapolation.CLAMP);
     const sy = squash.value * air;
-    const sx = 1 / Math.sqrt(sy);
-    return {
-      transform: [{ translateY: drop.value + hop.value + (slothH * (1 - sy)) / 2 }, { scaleX: sx }, { scaleY: sy }],
-    };
+    return { transform: [{ translateY: drop.value + hop.value + (poseH * (1 - sy)) / 2 }, { scaleX: 1 / Math.sqrt(sy) }, { scaleY: sy }] };
   });
-  const flameStyle = useAnimatedStyle(() => ({
-    opacity: 0.85 + 0.15 * flame.value,
-    transform: [{ translateY: -2 * flame.value }],
-  }));
-  const revealStyle = useAnimatedStyle(() => ({
-    opacity: reveal.value,
-    transform: [{ translateY: (1 - reveal.value) * 24 }],
-  }));
-  const todayStyle = useAnimatedStyle(() => ({ transform: [{ scaleY: todayCell.value }], opacity: todayCell.value }));
-  const streakStyle = useAnimatedStyle(() => ({ transform: [{ scale: streakPop.value }] }));
+  const revealStyle = useAnimatedStyle(() => ({ opacity: reveal.value, transform: [{ translateY: (1 - reveal.value) * 20 }] }));
+  const todayStyle = useAnimatedStyle(() => ({ opacity: today.value, transform: [{ scaleY: today.value }] }));
+  const popStyle = useAnimatedStyle(() => ({ transform: [{ scale: pop.value }] }));
 
   return (
-    <View style={[ui.root, styles.bg]}>
-      <View style={[styles.glow, { width: width * 1.2, height: width * 1.2, borderRadius: width * 0.6, top: -width * 0.45 }]} />
-
-      <Animated.View style={[{ position: 'absolute', left: width / 2 - size / 2, top: slothTop, width: size, height: slothH }, slothStyle]}>
-        <SnoozeBody size={size} />
-        <View style={StyleSheet.absoluteFill}>
-          <SnoozeHead size={size} eyes="happy" mouth="open" />
-        </View>
-        <View style={StyleSheet.absoluteFill}>
-          <SnoozeArms size={size} pose="cheer" />
-        </View>
-        <Animated.View style={[StyleSheet.absoluteFill, flameStyle]}>
-          <SnoozeFlame size={size} />
+    <View style={[styles.root, { paddingTop: stageTop, paddingBottom: insets.bottom + 18 }]}>
+      <View style={{ width: burst, height: burst, alignSelf: 'center' }}>
+        <Animated.View style={[StyleSheet.absoluteFill, spinStyle]}>
+          <Sunburst size={burst} />
         </Animated.View>
-      </Animated.View>
-
+        <Animated.View style={[{ position: 'absolute', left: (burst - poseW) / 2, top: burst - poseH + 6, width: poseW, height: poseH }, poseStyle]}>
+          <Image source={POSES.celebrate} style={{ width: poseW, height: poseH }} accessibilityLabel="Snooze celebrating with both arms up" />
+        </Animated.View>
+      </View>
       {pieces.map((p, i) => (
         <ConfettiPiece key={i} t={confetti} p={p} />
       ))}
 
-      <Animated.View style={[styles.content, { top: slothTop + slothH + 14 }, revealStyle]}>
-        <Text style={styles.title}>You’re up.</Text>
+      <Animated.View style={[{ alignItems: 'center', gap: 4, marginTop: 14 }, revealStyle]}>
+        <Text style={styles.h1}>You’re up.</Text>
         <Text style={styles.sub}>No snooze. That one counts.</Text>
-        <View style={styles.card}>
-          <Animated.Text style={[styles.streak, streakStyle]}>{streak} day streak</Animated.Text>
+      </Animated.View>
+
+      <Animated.View style={[{ marginTop: 16 }, revealStyle]}>
+        <Card>
+          <View style={styles.streakRow}>
+            <Animated.View style={[styles.streakTitle, popStyle]}>
+              <Icon d={FLAME} size={28} color={C.ink} width={2.2} />
+              <Text style={styles.streakText}>{streak} day streak</Text>
+            </Animated.View>
+            <View style={styles.best}>
+              <Text style={styles.bestText}>Best: 12</Text>
+            </View>
+          </View>
           <View style={styles.week}>
             {DAYS.map((d, i) => (
               <View key={i} style={styles.day}>
                 {i < 6 ? (
-                  <View style={[styles.cell, styles.cellDone]} />
+                  <View style={[styles.cell, { backgroundColor: C.leaf }]} />
                 ) : (
-                  <View style={[styles.cell, styles.cellEmpty]}>
-                    <Animated.View style={[StyleSheet.absoluteFill, styles.cellToday, todayStyle]} />
+                  <View style={[styles.cell, { backgroundColor: C.oat }]}>
+                    <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: C.sun, borderRadius: 8 }, todayStyle]} />
                   </View>
                 )}
-                <Text style={[styles.dayText, i === 6 && { color: '#FBF7FF' }]}>{d}</Text>
+                <Text style={styles.dayText}>{d}</Text>
               </View>
             ))}
           </View>
-        </View>
+        </Card>
       </Animated.View>
 
-      <Animated.View style={[styles.actions, { paddingBottom: insets.bottom + 20 }, revealStyle]}>
-        <Pressable accessibilityRole="button" onPress={onAgain} style={({ pressed }) => [ui.ctaLight, pressed && ui.pressed]}>
-          <Text style={ui.ctaLightText}>Ring me again</Text>
-        </Pressable>
-        <Pressable accessibilityRole="button" onPress={onDone} style={styles.done}>
-          <Text style={styles.doneText}>Done</Text>
-        </Pressable>
+      <Animated.View style={[{ marginTop: 'auto', gap: 4 }, revealStyle]}>
+        <TactileButton label="Start morning routine" onPress={onRoutine} />
+        <TextButton label="Done for now" onPress={onDone} />
       </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  bg: { backgroundColor: '#1A0F2E' },
-  glow: { position: 'absolute', alignSelf: 'center', backgroundColor: '#7B4DFF', opacity: 0.45 },
-  piece: { position: 'absolute', left: 0, top: 0, borderRadius: 2 },
-  content: { position: 'absolute', left: 22, right: 22, alignItems: 'center', gap: 6 },
-  title: { fontFamily: 'Fredoka_700Bold', fontSize: 46, color: '#FBF7FF' },
-  sub: { fontFamily: 'Fredoka_500Medium', fontSize: 16, color: '#D9CFEA' },
-  card: {
-    marginTop: 12,
-    alignSelf: 'stretch',
-    backgroundColor: '#251A40',
-    borderRadius: 22,
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,138,61,0.6)',
-    padding: 16,
-    gap: 12,
-    alignItems: 'center',
-  },
-  streak: { fontFamily: 'Fredoka_700Bold', fontSize: 30, color: '#FF8A3D' },
-  week: { flexDirection: 'row', gap: 6, alignSelf: 'stretch' },
+  root: { flex: 1, backgroundColor: C.paper, paddingHorizontal: 20 },
+  piece: { position: 'absolute', left: 0, top: 0, width: 12, height: 7, borderRadius: 2, borderWidth: 1.5, borderColor: C.ink },
+  h1: { fontFamily: F.display, fontSize: 46, lineHeight: 50, color: C.ink },
+  sub: { fontFamily: F.bodyBold, fontSize: 16, color: C.ink60 },
+  streakRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  streakTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  streakText: { fontFamily: F.display, fontSize: 26, color: C.ink },
+  best: { backgroundColor: C.sunSoft, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  bestText: { fontFamily: F.label, fontSize: 12.5, color: C.ink },
+  week: { flexDirection: 'row', gap: 6, marginTop: 12 },
   day: { flex: 1, alignItems: 'center', gap: 4 },
-  cell: { alignSelf: 'stretch', height: 30, borderRadius: 9, overflow: 'hidden' },
-  cellDone: { backgroundColor: '#3EE6B0' },
-  cellEmpty: { backgroundColor: '#3A2E5A' },
-  cellToday: { backgroundColor: '#FFD34D', borderRadius: 9 },
-  dayText: { fontFamily: 'Fredoka_600SemiBold', fontSize: 12, color: '#B7AECF' },
-  actions: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 22, gap: 6, alignItems: 'center' },
-  done: { paddingVertical: 12, paddingHorizontal: 24 },
-  doneText: { fontFamily: 'Fredoka_700Bold', fontSize: 17, color: '#FBF7FF' },
+  cell: { alignSelf: 'stretch', height: 30, borderRadius: 10, borderWidth: 2, borderColor: C.ink, overflow: 'hidden' },
+  dayText: { fontFamily: F.label, fontSize: 11.5, color: C.ink },
 });
