@@ -56,14 +56,15 @@ The knobs are at the top of `src/WelcomeScreen.tsx`:
 ## Files
 
 - `App.tsx`: loads the Fredoka font and the gesture and safe-area providers
-- `src/WelcomeScreen.tsx`: the interactive scene and the physics
+- `src/WelcomeScreen.tsx`: the interactive welcome scene
+- `src/useSwing.ts`: the swing physics (tilt, drag, damping)
 - `src/Snooze.tsx`: Snooze, drawn in code (body, cap and arms are separate layers so they can move independently)
 - `src/sky.ts`: sky-of-the-hour colours and brand colours
 - `src/GentleScreen.tsx`, `src/RingingScreen.tsx`, `src/WinScreen.tsx`: the alarm screens
 - `src/ArtHangingSnooze.tsx`: the hand-drawn hanging Snooze, leaning under its hands
 - `src/sound.ts`: alarm sounds (`expo-audio`)
+- `assets/icon.png`: the app icon, rendered from the original Slothrise icon
 
 ## Not yet
 
 This is a demo of the wake-up experience. Real alarms that ring while the app is closed or the phone is locked need native alarm scheduling (AlarmKit on iOS, exact alarms on Android). Expo Go can't run those, so that step needs a development build (`npx eas-cli@latest build --profile development`).
-- `assets/icon.png`: the app icon, rendered from the original Slothrise icon
