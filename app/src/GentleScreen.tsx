@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import HoldButton from './HoldButton';
 import { RisingSun, SkyGradient } from './Scenery';
 import { SOUNDS, useLoopingSound, useOneShot } from './sound';
+import { clock, type Alarm } from './state';
 import { C, F, POSE_RATIO, POSES } from './theme';
 
 // Product timings: a three-minute sunrise, then the full alarm at five minutes.
@@ -19,7 +20,7 @@ export const DEMO_SUNRISE_S = 15;
 export const DEMO_BACKUP_S = 30;
 const MIN_VOLUME = 0.06;
 
-export default function GentleScreen({ onWake, onEscalate, demo = false }: { onWake: () => void; onEscalate: () => void; demo?: boolean }) {
+export default function GentleScreen({ alarm, onWake, onEscalate, demo = false }: { alarm: Alarm | null; onWake: () => void; onEscalate: () => void; demo?: boolean }) {
   const sunriseS = demo ? DEMO_SUNRISE_S : SUNRISE_S;
   const backupS = demo ? DEMO_BACKUP_S : BACKUP_S;
   const { width, height } = useWindowDimensions();
@@ -77,8 +78,21 @@ export default function GentleScreen({ onWake, onEscalate, demo = false }: { onW
 
       <View style={[styles.top, { paddingTop: insets.top + 22 }]}>
         <Text style={styles.eyebrow}>EASY NOW, SLEEPYHEAD</Text>
-        <Text style={styles.time}>9:00</Text>
-        <Text style={styles.label}>Slow start</Text>
+        {/* The real next alarm, or nothing at all — never a time the user did not set. */}
+        {alarm ? (
+          <>
+            <Text style={styles.time}>
+              {clock(alarm.hour, alarm.minute).time}
+              <Text style={styles.ampm}> {clock(alarm.hour, alarm.minute).ampm}</Text>
+            </Text>
+            <Text style={styles.label}>{alarm.label}</Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.label}>Gentle sunrise</Text>
+            <Text style={styles.note}>No alarm is on, so this is only the preview.</Text>
+          </>
+        )}
       </View>
 
       <Animated.View style={[{ alignSelf: 'center', marginTop: 18 }, poseStyle]}>
@@ -109,7 +123,9 @@ const styles = StyleSheet.create({
   top: { alignItems: 'center' },
   eyebrow: { fontFamily: F.label, fontSize: 13, letterSpacing: 2.2, color: C.sun },
   time: { fontFamily: F.display, fontSize: 104, lineHeight: 110, color: C.moon },
+  ampm: { fontSize: 30 },
   label: { fontFamily: F.displaySemi, fontSize: 20, color: C.moon },
+  note: { fontFamily: F.bodyBold, fontSize: 14, color: C.dim, marginTop: 2, textAlign: 'center' },
   actions: { position: 'absolute', left: 22, right: 22, bottom: 0, gap: 12 },
   progressCard: { backgroundColor: 'rgba(26,20,48,0.8)', borderRadius: 20, padding: 14, gap: 8 },
   progressRow: { flexDirection: 'row', justifyContent: 'space-between' },

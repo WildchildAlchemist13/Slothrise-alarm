@@ -170,7 +170,9 @@ export default function App() {
           )}
           {/* Gentle is only reachable as the bedtime preview (real alarms open RingingScreen), so getting up
               from it earns nothing and must not reach the win screen, which says "that one counts". */}
-          {screen === 'gentle' && <GentleScreen demo={gentleDemo} onWake={() => go('home')} onEscalate={() => go('ringing')} />}
+          {screen === 'gentle' && (
+            <GentleScreen alarm={next?.alarm ?? null} demo={gentleDemo} onWake={() => go('home')} onEscalate={() => go('ringing')} />
+          )}
           {screen === 'win' && (
             <WinScreen
               streak={state.streak}
