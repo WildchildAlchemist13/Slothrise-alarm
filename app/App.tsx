@@ -153,6 +153,10 @@ export default function App() {
     const current = stateRef.current;
     if (!current) return;
     void cancelChain();
+    // The alarm is answered, so the ring screen no longer owns the store. Say it here, before reschedule():
+    // the screen effect only runs after the next commit, by which time the chain would already be armed and
+    // then re-cancelled by a stale flag — a wake that leaves the next alarm with no follow-ups.
+    setRingOpen(false);
     const next = recordWin(current);
     update(next);
     // Re-arm the follow-up rings for the alarm that comes next.
@@ -167,6 +171,9 @@ export default function App() {
       // One owner: the pending ring goes into state, and only reschedule() touches the notification store.
       // Home reads the same value, so it counts down to the snoozed ring instead of next week's alarm.
       const next = { ...current, snooze: { alarmId: alarm.id, at: Date.now() + SNOOZE_MS } };
+      // Same ordering trap as completeWake: the snoozed ring's own chain is armed by this reschedule, so the
+      // ring screen must give the store up first or arm() deletes the nine follow-ups it just scheduled.
+      setRingOpen(false);
       update(next);
       reschedule(next);
     }
