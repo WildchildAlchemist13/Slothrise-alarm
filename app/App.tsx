@@ -15,7 +15,7 @@ import WinScreen from './src/WinScreen';
 import RoutineScreen from './src/RoutineScreen';
 import GentleScreen from './src/GentleScreen';
 import { C, isNight } from './src/theme';
-import { cancelChain, ensurePermissions, installHandler, scheduleAlarms, scheduledCount, snoozeAlarm, SNOOZE_MS, type AlarmPermissions } from './src/alarms';
+import { cancelChain, ensurePermissions, installHandler, scheduleAlarms, scheduledCount, SNOOZE_MS, type AlarmPermissions } from './src/alarms';
 import { clock, loadState, nextAlarm, nextRing, recordWin, ringScreen, saveState, type Alarm, type AppState } from './src/state';
 
 type Screen = 'welcome' | 'home' | 'ringing' | 'mission' | 'gentle' | 'win' | 'routine';
@@ -51,8 +51,9 @@ export default function App() {
     void saveState(next);
   }, []);
 
-  const reschedule = useCallback((alarms: Alarm[]) => {
-    void scheduleAlarms(alarms).then((result) => {
+  // The whole state goes in, not just the alarms: a pending snooze is part of what has to be re-armed.
+  const reschedule = useCallback((next: AppState) => {
+    void scheduleAlarms(next).then((result) => {
       setScheduled(result.scheduled);
       if (__DEV__) console.log('[alarms] scheduled', result.scheduled, result.error ? `error: ${result.error}` : 'ok');
     });
@@ -100,7 +101,7 @@ export default function App() {
       const perms = await ensurePermissions();
       if (!alive) return;
       setPermissions(perms);
-      if (perms.notifications) reschedule(loaded.alarms);
+      if (perms.notifications) reschedule(loaded);
       else setScheduled(await scheduledCount());
     })();
     return () => {
@@ -135,7 +136,7 @@ export default function App() {
       if (!current) return;
       const next = { ...current, alarms: current.alarms.map((a) => (a.id === id ? { ...a, enabled: !a.enabled } : a)) };
       update(next);
-      reschedule(next.alarms);
+      reschedule(next);
     },
     [reschedule, update],
   );
@@ -144,22 +145,25 @@ export default function App() {
     const current = stateRef.current;
     if (!current) return;
     void cancelChain();
-    update(recordWin(current));
+    const next = recordWin(current);
+    update(next);
     // Re-arm the follow-up rings for the alarm that comes next.
-    reschedule(current.alarms);
+    reschedule(next);
   }, [reschedule, update]);
 
   /** Snooze really snoozes: the same alarm is scheduled again in five minutes and the home screen waits. */
   const snooze = useCallback(() => {
     const alarm = activeAlarm;
     const current = stateRef.current;
-    if (alarm) {
-      void snoozeAlarm(alarm).then(() => scheduledCount()).then(setScheduled);
-      // Home reads this, so it counts down to the snoozed ring instead of next week's alarm.
-      if (current) update({ ...current, snooze: { alarmId: alarm.id, at: Date.now() + SNOOZE_MS } });
+    if (alarm && current) {
+      // One owner: the pending ring goes into state, and only reschedule() touches the notification store.
+      // Home reads the same value, so it counts down to the snoozed ring instead of next week's alarm.
+      const next = { ...current, snooze: { alarmId: alarm.id, at: Date.now() + SNOOZE_MS } };
+      update(next);
+      reschedule(next);
     }
     go('home');
-  }, [activeAlarm, update]);
+  }, [activeAlarm, reschedule, update]);
 
   if (!fontsLoaded || !state) return <View style={{ flex: 1, backgroundColor: C.paper }} />;
   const dark = DARK.includes(screen) || (screen === 'home' && isNight());

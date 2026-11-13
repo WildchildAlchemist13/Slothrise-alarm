@@ -7,7 +7,7 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
-import { nextAlarm, type Alarm } from './state';
+import { nextRing, type Alarm, type AppState } from './state';
 
 export const ALARM_CHANNEL = 'alarm';
 export const ALARM_SOUND = 'alarm_chime.wav';
@@ -187,32 +187,26 @@ export async function cancelChain(alarmId?: string): Promise<void> {
   }
 }
 
-/** Snooze: ring the same alarm again in a few minutes, with the same follow-up chain. */
-export async function snoozeAlarm(alarm: Alarm, delayMs = SNOOZE_MS): Promise<ScheduleResult> {
-  try {
-    await ensureChannel();
-    await cancelChain(alarm.id);
-    const at = new Date(Date.now() + delayMs);
-    const trigger: Notifications.NotificationTriggerInput =
-      Platform.OS === 'android'
-        ? { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: ALARM_CHANNEL, delivery: 'alarmClock' }
-        : { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at };
-    await Notifications.scheduleNotificationAsync({ content: content(alarm), trigger });
-    const followUps = await scheduleChain(alarm, at);
-    return { scheduled: 1 + followUps };
-  } catch (e) {
-    return { scheduled: 0, error: e instanceof Error ? e.message : String(e) };
-  }
+/** A one-off ring at a chosen time: the snooze anchor, whose weekly triggers do not cover it. */
+function oneOffTrigger(at: Date): Notifications.NotificationTriggerInput {
+  return Platform.OS === 'android'
+    ? { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at, channelId: ALARM_CHANNEL, delivery: 'alarmClock' }
+    : { type: Notifications.SchedulableTriggerInputTypes.DATE, date: at };
 }
 
-/** Replace every scheduled alarm with the current list. Safe to call on each change. */
-export async function scheduleAlarms(alarms: Alarm[]): Promise<ScheduleResult> {
+/**
+ * The only thing that schedules or cancels notifications. It takes the whole state, not just the alarm list,
+ * because a pending snooze lives in that state: `cancelAll` below deletes its anchor, so whoever re-arms the
+ * alarms has to put it back. A snooze scheduled from anywhere else would be a second owner of the same store,
+ * which is how a relaunch or an alarm toggle used to swallow a snooze that Home was still counting down.
+ */
+export async function scheduleAlarms(state: AppState): Promise<ScheduleResult> {
   try {
     await ensureChannel();
     await Notifications.cancelAllScheduledNotificationsAsync();
-    logChain(`schedule ${alarms.filter((a) => a.enabled).map((a) => `${a.id}/${a.mode}`).join(' ') || 'none'}`);
+    logChain(`schedule ${state.alarms.filter((a) => a.enabled).map((a) => `${a.id}/${a.mode}`).join(' ') || 'none'}`);
     let scheduled = 0;
-    for (const alarm of alarms) {
+    for (const alarm of state.alarms) {
       if (!alarm.enabled) continue;
       const days = alarm.weekdays.length ? alarm.weekdays : [1, 2, 3, 4, 5, 6, 7];
       for (const weekday of days) {
@@ -220,9 +214,15 @@ export async function scheduleAlarms(alarms: Alarm[]): Promise<ScheduleResult> {
         scheduled += 1;
       }
     }
-    // Follow-up rings for the alarm that fires next; the weekly triggers above carry the rest.
-    const next = nextAlarm(alarms);
-    if (next) scheduled += await scheduleChain(next.alarm, next.at);
+    // The ring actually coming next: a live snooze first, otherwise the weekly schedule. An expired or
+    // orphaned snooze is already dropped by nextRing, so it cannot hold this slot.
+    const ring = nextRing(state);
+    if (ring?.snoozed) {
+      await Notifications.scheduleNotificationAsync({ content: content(ring.alarm), trigger: oneOffTrigger(ring.at) });
+      scheduled += 1;
+    }
+    // Follow-up rings for that one ring; the weekly triggers above carry the later alarms.
+    if (ring) scheduled += await scheduleChain(ring.alarm, ring.at);
     return { scheduled };
   } catch (e) {
     return { scheduled: 0, error: e instanceof Error ? e.message : String(e) };
