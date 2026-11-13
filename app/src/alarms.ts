@@ -89,13 +89,13 @@ export async function ensurePermissions(): Promise<AlarmPermissions> {
   return { notifications: settings.granted, exact };
 }
 
-function content(alarm: Alarm, chain = false): Notifications.NotificationContentInput {
+function content(alarm: Alarm, chain = false, dueAt?: number): Notifications.NotificationContentInput {
   return {
     title: alarm.label,
     body: alarm.mode === 'gentle' ? 'The sunrise is starting. Hold to wake.' : 'Time to get up. Hold to wake.',
     sound: alarm.mode === 'gentle' ? GENTLE_SOUND : ALARM_SOUND,
     interruptionLevel: 'timeSensitive',
-    data: { alarmId: alarm.id, ...(chain ? { chain: true } : {}) },
+    data: { alarmId: alarm.id, ...(chain ? { chain: true } : {}), ...(dueAt !== undefined ? { dueAt } : {}) },
   };
 }
 
@@ -162,7 +162,7 @@ async function scheduleChain(alarm: Alarm, from: Date, steps = CHAIN_REPEATS): P
   for (let i = 1; i <= steps; i += 1) {
     const date = new Date(from.getTime() + i * CHAIN_STEP_MS);
     if (date.getTime() <= Date.now()) continue;
-    await Notifications.scheduleNotificationAsync({ content: content(alarm, true), trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date } });
+    await Notifications.scheduleNotificationAsync({ content: content(alarm, true, date.getTime()), trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date } });
     count += 1;
     at.push(stamp(date));
   }
@@ -230,12 +230,13 @@ const RING_WINDOW_MS = 15 * 60_000;
 async function cancelDueChains(): Promise<number> {
   const pending = await Notifications.getAllScheduledNotificationsAsync();
   const now = Date.now();
+  // The due time comes from the step's own payload. A request read back from the store has no absolute time
+  // on its trigger: a date trigger is scheduled as a UNTimeIntervalNotificationTrigger and serialises as
+  // { type: 'timeInterval', seconds }, so reading the trigger for a time never matched anything.
   const due = pending.filter((n) => {
-    if (n.content.data?.chain !== true) return false;
-    const when = (n.trigger as { date?: number | string }).date;
-    if (when === undefined) return false;
-    const ms = new Date(when).getTime();
-    return Number.isFinite(ms) && ms - now <= RING_WINDOW_MS;
+    const d = n.content.data;
+    if (d?.chain !== true) return false;
+    return typeof d.dueAt === 'number' && d.dueAt - now <= RING_WINDOW_MS;
   });
   await Promise.all(due.map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)));
   return due.length;
