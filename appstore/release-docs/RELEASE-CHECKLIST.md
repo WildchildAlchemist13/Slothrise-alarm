@@ -2,8 +2,10 @@
 
 State as read from `feat/real-alarms` at 78fb9f0 on 13 Nov 2026. Nothing here was entered into App
 Store Connect; that is deliberate and out of scope for this task. Where a gate says "Release build",
-it means the simulator Release build at `/tmp/shots/dd/Build/Products/Release-iphonesimulator`
-(fb8415b plus the two code commits after it); a signed `.ipa` was still not available.
+it means the simulator Release build at `/tmp/shots/dd/Build/Products/Release-iphonesimulator`,
+which is fb8415b plus bb744e2 and **not** fc70f6c: its `main.jsbundle` contains
+`getLastNotificationResponseAsync` but no `nextRing` or `SNOOZED` string, so the snooze countdown is
+absent from it. A signed `.ipa` was still not available.
 
 Legend: **DONE** verified · **DRAFT** written, not submitted · **TODO** work remains · **BLOCKED** needs
 something only Revanth can supply · **UNKNOWN** could not be checked without signing in.
