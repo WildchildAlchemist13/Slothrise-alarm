@@ -54,6 +54,27 @@ export default function App() {
     });
   }, []);
 
+  // A response can arrive before the saved alarms have loaded, which is exactly what happens on a cold
+  // start from a notification. Hold the request instead of dropping it, and answer it once state is in.
+  const pendingRing = useRef<{ alarmId?: string } | null>(null);
+
+  /** An alarm rang (or its notification was tapped): ring with that alarm, or the next one if the id is unknown. */
+  const ring = useCallback((alarmId?: unknown) => {
+    // Stop the follow-up rings the moment someone answers, even before the screen can switch: on a cold
+    // start the alarm is being dismissed while the app is still loading.
+    void cancelChain();
+    const id = typeof alarmId === 'string' ? alarmId : undefined;
+    const current = stateRef.current;
+    if (!current) {
+      pendingRing.current = { alarmId: id };
+      return;
+    }
+    const found = id ? current.alarms.find((a) => a.id === id) ?? null : null;
+    setActiveAlarm(found ?? nextAlarm(current.alarms)?.alarm ?? current.alarms[0] ?? null);
+    setRunId((n) => n + 1);
+    setScreen('ringing');
+  }, []);
+
   useEffect(() => {
     installHandler();
     let alive = true;
@@ -62,6 +83,10 @@ export default function App() {
       if (!alive) return;
       stateRef.current = loaded;
       setState(loaded);
+      // The alarm that launched us is now answerable.
+      const waiting = pendingRing.current;
+      pendingRing.current = null;
+      if (waiting) ring(waiting.alarmId);
       const perms = await ensurePermissions();
       if (!alive) return;
       setPermissions(perms);
@@ -71,20 +96,7 @@ export default function App() {
     return () => {
       alive = false;
     };
-  }, [reschedule]);
-
-  /** An alarm rang (or its notification was tapped): ring with that alarm, or the next one if the id is unknown. */
-  const ring = useCallback((alarmId?: unknown) => {
-    const current = stateRef.current;
-    if (!current) return;
-    // Someone is looking at a ringing alarm: stop every follow-up ring queued behind it, whichever
-    // alarm it belonged to, so a stale chain cannot keep firing at a person who already got up.
-    void cancelChain();
-    const found = typeof alarmId === 'string' ? current.alarms.find((a) => a.id === alarmId) ?? null : null;
-    setActiveAlarm(found ?? nextAlarm(current.alarms)?.alarm ?? current.alarms[0] ?? null);
-    setRunId((n) => n + 1);
-    setScreen('ringing');
-  }, []);
+  }, [reschedule, ring]);
 
   useEffect(() => {
     const received = Notifications.addNotificationReceivedListener((n) => ring(n.request.content.data?.alarmId));
@@ -96,10 +108,13 @@ export default function App() {
   }, [ring]);
 
   useEffect(() => {
-    // Cold start from a tapped alarm notification.
+    // Cold start caused by tapping an alarm. The response is read once, then cleared, so an ordinary
+    // launch later does not jump back to a ring screen from a notification tapped days ago.
     Notifications.getLastNotificationResponseAsync()
       .then((r) => {
-        if (r) ring(r.notification.request.content.data?.alarmId);
+        if (!r) return;
+        ring(r.notification.request.content.data?.alarmId);
+        Notifications.clearLastNotificationResponse();
       })
       .catch(() => {});
   }, [ring]);
