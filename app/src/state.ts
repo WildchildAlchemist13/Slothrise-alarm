@@ -170,6 +170,11 @@ export function recordWin(state: AppState, now: Date = new Date()): AppState {
 
 export type NextAlarm = { alarm: Alarm; at: Date };
 
+/** Which screen an alarm opens: a gentle alarm starts the sunrise, every other alarm the ring screen. */
+export function ringScreen(alarm: Alarm | null): 'gentle' | 'ringing' {
+  return alarm?.mode === 'gentle' ? 'gentle' : 'ringing';
+}
+
 /** The ring that is actually coming next: a pending snooze first, otherwise the weekly schedule. */
 export type NextRing = NextAlarm & { snoozed: boolean };
 

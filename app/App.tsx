@@ -16,7 +16,7 @@ import RoutineScreen from './src/RoutineScreen';
 import GentleScreen from './src/GentleScreen';
 import { C, isNight } from './src/theme';
 import { cancelChain, ensurePermissions, installHandler, scheduleAlarms, scheduledCount, snoozeAlarm, SNOOZE_MS, type AlarmPermissions } from './src/alarms';
-import { clock, loadState, nextAlarm, nextRing, recordWin, saveState, type Alarm, type AppState } from './src/state';
+import { clock, loadState, nextAlarm, nextRing, recordWin, ringScreen, saveState, type Alarm, type AppState } from './src/state';
 
 type Screen = 'welcome' | 'home' | 'ringing' | 'mission' | 'gentle' | 'win' | 'routine';
 // Screens with a dark background get light status-bar text.
@@ -32,7 +32,11 @@ export default function App() {
   // A new key each time remounts the screen, so its animations replay from the start.
   const [runId, setRunId] = useState(0);
   // Gentle mode runs at the real 180 s / 300 s pace; only the dev shortcut uses the short demo.
-  const [gentleDemo, setGentleDemo] = useState(false);
+  // `alarm` means a real alarm opened the sunrise; `preview` is Wind down, which earns nothing.
+  const [gentleRun, setGentleRun] = useState<'preview' | 'demo' | 'alarm'>('preview');
+  // True while the screen on show belongs to an alarm that actually fired. A preview is not a wake:
+  // it must not record a win or reach the win screen, which says "that one counts".
+  const [realRing, setRealRing] = useState(false);
   const stateRef = useRef<AppState | null>(null);
 
   const go = (s: Screen) => {
@@ -72,9 +76,13 @@ export default function App() {
     const found = id ? current.alarms.find((a) => a.id === id) ?? null : null;
     // A snooze that has now rung is no longer pending.
     if (current.snooze) update({ ...current, snooze: null });
-    setActiveAlarm(found ?? nextAlarm(current.alarms)?.alarm ?? current.alarms[0] ?? null);
+    const target = found ?? nextAlarm(current.alarms)?.alarm ?? current.alarms[0] ?? null;
+    setActiveAlarm(target);
+    setRealRing(true);
+    // A gentle alarm opens the sunrise instead of the ring screen; the chime takes over at 300 s.
+    setGentleRun(target?.mode === 'gentle' ? 'alarm' : 'preview');
     setRunId((n) => n + 1);
-    setScreen('ringing');
+    setScreen(ringScreen(target));
   }, [update]);
 
   useEffect(() => {
@@ -176,11 +184,13 @@ export default function App() {
               onToggleAlarm={toggleAlarm}
               onRing={() => ring(next?.alarm.id)}
               onGentle={() => {
-                setGentleDemo(false);
+                setGentleRun('preview');
+                setRealRing(false);
                 go('gentle');
               }}
               onGentleDemo={() => {
-                setGentleDemo(true);
+                setGentleRun('demo');
+                setRealRing(false);
                 go('gentle');
               }}
               onRoutine={() => go('routine')}
@@ -200,15 +210,32 @@ export default function App() {
               style={state.missionStyle}
               onStyle={(missionStyle) => update({ ...state, missionStyle })}
               onDone={() => {
+                if (!realRing) {
+                  go('home');
+                  return;
+                }
                 completeWake();
                 go('win');
               }}
             />
           )}
-          {/* Gentle is only reachable as the bedtime preview (real alarms open RingingScreen), so getting up
-              from it earns nothing and must not reach the win screen, which says "that one counts". */}
+          {/* A gentle alarm opens the sunrise; the chime takes over at 300 s. Wind down opens the same
+              screen as a preview, so getting up from that earns nothing and the escalation goes home
+              rather than to the win screen, which says "that one counts". */}
           {screen === 'gentle' && (
-            <GentleScreen alarm={next?.alarm ?? null} demo={gentleDemo} onWake={() => go('home')} onEscalate={() => go('ringing')} />
+            <GentleScreen
+              alarm={realRing ? activeAlarm : next?.alarm ?? null}
+              demo={gentleRun === 'demo'}
+              onWake={() => {
+                if (!realRing) {
+                  go('home');
+                  return;
+                }
+                completeWake();
+                go('win');
+              }}
+              onEscalate={() => go('ringing')}
+            />
           )}
           {screen === 'win' && (
             <WinScreen

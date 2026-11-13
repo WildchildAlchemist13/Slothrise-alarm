@@ -104,7 +104,7 @@ export default function GentleScreen({ alarm, onWake, onEscalate, demo = false }
           <View style={styles.progressRow}>
             <Text style={styles.progressText}>Sunrise {percent}%</Text>
             <Text style={[styles.progressText, { color: C.sun }]}>
-              Mission in {mm}:{ss}
+              Full alarm in {mm}:{ss}
             </Text>
           </View>
           <View style={styles.track}>

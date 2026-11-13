@@ -27,7 +27,7 @@ The Expo (React Native) app for Slothrise: Alarm & Habits, in the "Cozy Sunrise"
 - **Mission:** three sums. A wrong answer shakes and buzzes; the alarm keeps chiming until you're done.
 - **Wake win:** Snooze drops in cheering, confetti, and the streak goes up.
 - **Routine:** one "Next up" habit with a big Done button; tick or skip the rest.
-- **Gentle mode** (*Play the Gentle sunrise*, or *Goodnight, Snooze* at bedtime): night lifts into dawn while soft bells rise from 6% to 100% volume. Hold *I'm up* any time; still in bed when the backup kicks in, the full alarm takes over. A real alarm runs a 180 s sunrise with the full alarm at 300 s (`SUNRISE_S` / `BACKUP_S` in `src/GentleScreen.tsx`); the dev-only *Play the Gentle sunrise* shortcut uses 15 s / 30 s (`DEMO_SUNRISE_S` / `DEMO_BACKUP_S`) so the whole arc is visible quickly.
+- **Gentle mode** (any alarm whose mode is Gentle, *Goodnight, Snooze* at bedtime as a preview, or the dev-only *Play the Gentle sunrise*): night lifts into dawn while soft bells rise from 6% to 100% volume. Hold *I'm up* any time; still in bed when the backup kicks in, the full alarm takes over. A real alarm opens this screen instead of the ring screen, runs a 180 s sunrise with the full alarm at 300 s (`SUNRISE_S` / `BACKUP_S` in `src/GentleScreen.tsx`), and its hold counts the wake; the bedtime preview earns nothing. The dev shortcut uses 15 s / 30 s (`DEMO_SUNRISE_S` / `DEMO_BACKUP_S`) so the whole arc is visible quickly.
 - The hanging Snooze reacts to **tilt** (he swings), **drag** (push him) and **tap** (he wakes up and says hello).
 
 ## Files
