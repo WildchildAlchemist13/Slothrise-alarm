@@ -33,6 +33,8 @@ export type AppState = {
   bedtime: { hour: number; minute: number };
   /** which mission dismisses the alarm: three sums, or a tap count for anyone who cannot do the maths */
   missionStyle: 'math' | 'tap';
+  /** a snoozed ring that is still coming, so the home screen can say so instead of showing next week */
+  snooze: { alarmId: string; at: number } | null;
 };
 
 const KEY = 'slothrise/app-state/v1';
@@ -65,6 +67,7 @@ export function defaultState(): AppState {
     habits: SEED_HABITS.map((h) => ({ ...h })),
     bedtime: { hour: 22, minute: 30 },
     missionStyle: 'math',
+    snooze: null,
   };
 }
 
@@ -131,6 +134,11 @@ function readState(raw: string): AppState {
     habits,
     bedtime: s.bedtime && Number.isFinite(s.bedtime.hour) ? s.bedtime : base.bedtime,
     missionStyle: s.missionStyle === 'tap' ? 'tap' : 'math',
+    // A snooze that is already in the past is not a pending ring; drop it on load.
+    snooze:
+      s.snooze && typeof s.snooze.alarmId === 'string' && Number.isFinite(s.snooze.at) && s.snooze.at > Date.now()
+        ? { alarmId: s.snooze.alarmId, at: s.snooze.at }
+        : null,
   };
 }
 
@@ -161,6 +169,19 @@ export function recordWin(state: AppState, now: Date = new Date()): AppState {
 }
 
 export type NextAlarm = { alarm: Alarm; at: Date };
+
+/** The ring that is actually coming next: a pending snooze first, otherwise the weekly schedule. */
+export type NextRing = NextAlarm & { snoozed: boolean };
+
+export function nextRing(state: AppState, now: Date = new Date()): NextRing | null {
+  const { snooze } = state;
+  if (snooze && snooze.at > now.getTime()) {
+    const alarm = state.alarms.find((a) => a.id === snooze.alarmId);
+    if (alarm) return { alarm, at: new Date(snooze.at), snoozed: true };
+  }
+  const next = nextAlarm(state.alarms, now);
+  return next ? { ...next, snoozed: false } : null;
+}
 
 /** The soonest enabled alarm in the next eight days, or null when nothing is enabled. */
 export function nextAlarm(alarms: Alarm[], now: Date = new Date()): NextAlarm | null {

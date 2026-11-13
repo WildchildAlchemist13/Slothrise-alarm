@@ -15,8 +15,8 @@ import WinScreen from './src/WinScreen';
 import RoutineScreen from './src/RoutineScreen';
 import GentleScreen from './src/GentleScreen';
 import { C, isNight } from './src/theme';
-import { cancelChain, ensurePermissions, installHandler, scheduleAlarms, scheduledCount, snoozeAlarm, type AlarmPermissions } from './src/alarms';
-import { clock, loadState, nextAlarm, recordWin, saveState, type Alarm, type AppState } from './src/state';
+import { cancelChain, ensurePermissions, installHandler, scheduleAlarms, scheduledCount, snoozeAlarm, SNOOZE_MS, type AlarmPermissions } from './src/alarms';
+import { clock, loadState, nextAlarm, nextRing, recordWin, saveState, type Alarm, type AppState } from './src/state';
 
 type Screen = 'welcome' | 'home' | 'ringing' | 'mission' | 'gentle' | 'win' | 'routine';
 // Screens with a dark background get light status-bar text.
@@ -70,10 +70,12 @@ export default function App() {
       return;
     }
     const found = id ? current.alarms.find((a) => a.id === id) ?? null : null;
+    // A snooze that has now rung is no longer pending.
+    if (current.snooze) update({ ...current, snooze: null });
     setActiveAlarm(found ?? nextAlarm(current.alarms)?.alarm ?? current.alarms[0] ?? null);
     setRunId((n) => n + 1);
     setScreen('ringing');
-  }, []);
+  }, [update]);
 
   useEffect(() => {
     installHandler();
@@ -142,13 +144,19 @@ export default function App() {
   /** Snooze really snoozes: the same alarm is scheduled again in five minutes and the home screen waits. */
   const snooze = useCallback(() => {
     const alarm = activeAlarm;
-    if (alarm) void snoozeAlarm(alarm).then(() => scheduledCount()).then(setScheduled);
+    const current = stateRef.current;
+    if (alarm) {
+      void snoozeAlarm(alarm).then(() => scheduledCount()).then(setScheduled);
+      // Home reads this, so it counts down to the snoozed ring instead of next week's alarm.
+      if (current) update({ ...current, snooze: { alarmId: alarm.id, at: Date.now() + SNOOZE_MS } });
+    }
     go('home');
-  }, [activeAlarm]);
+  }, [activeAlarm, update]);
 
   if (!fontsLoaded || !state) return <View style={{ flex: 1, backgroundColor: C.paper }} />;
   const dark = DARK.includes(screen) || (screen === 'home' && isNight());
-  const next = nextAlarm(state.alarms);
+  // A pending snooze wins: it is the ring that is actually coming next.
+  const next = nextRing(state);
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: C.paper }}>

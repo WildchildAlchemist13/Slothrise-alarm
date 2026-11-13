@@ -6,12 +6,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, TabBar } from './Scenery';
 import { Card, Chip, FlatCard, Label, TactileButton, TextButton, Toggle } from './Tactile';
 import { C, F, OUTLINE, POSE_RATIO, POSES, R, isNight } from './theme';
-import { clock, countdown, dayKey, scheduleText, sleepHours, weekDays, type Alarm, type NextAlarm } from './state';
+import { clock, countdown, dayKey, scheduleText, sleepHours, weekDays, type Alarm, type NextRing } from './state';
 import type { AlarmPermissions } from './alarms';
 
 type Props = {
   alarms: Alarm[];
-  next: NextAlarm | null;
+  next: NextRing | null;
   streak: number;
   wins: string[];
   permissions: AlarmPermissions | null;
@@ -68,7 +68,8 @@ function Day({ onRing, onGentleDemo, onRoutine, streak, alarms, next, wins, onTo
   const week = weekDays(now);
   const today = dayKey(now);
   const onTime = week.filter((d) => wins.includes(d)).length;
-  const heroTime = next ? clock(next.alarm.hour, next.alarm.minute) : null;
+  // A snoozed ring is due at a different time than the alarm's own, so show the ring, not the schedule.
+  const heroTime = next ? (next.snoozed ? clock(next.at.getHours(), next.at.getMinutes()) : clock(next.alarm.hour, next.alarm.minute)) : null;
 
   return (
     <View style={{ flex: 1, backgroundColor: C.paper }}>
@@ -89,7 +90,7 @@ function Day({ onRing, onGentleDemo, onRoutine, streak, alarms, next, wins, onTo
 
         <Card pad={0}>
           <View style={styles.heroBand}>
-            <Label color={C.ink}>{next ? `NEXT ALARM · ${countdown(next.at, now)}` : 'NEXT ALARM'}</Label>
+            <Label color={C.ink}>{next ? `${next.snoozed ? 'SNOOZED' : 'NEXT ALARM'} · ${countdown(next.at, now)}` : 'NEXT ALARM'}</Label>
             {next && heroTime ? (
               <Text style={styles.heroTime}>
                 {heroTime.time}
@@ -186,7 +187,9 @@ function Night({ onGentle, onDay, next, bedtime, permissions, scheduled, streak,
   const bed = clock(bedtime.hour, bedtime.minute);
   const enabled = alarms.filter((a) => a.enabled).length;
   // The card says when the alarm actually is, not "tomorrow" by default: a 6:30 alarm at 10 pm is tonight.
-  const heading = !at ? 'NEXT ALARM' : dayKey(at) === dayKey() ? 'LATER TODAY' : 'TOMORROW';
+  const heading = !at ? 'NEXT ALARM' : next?.snoozed ? 'SNOOZED' : dayKey(at) === dayKey() ? 'LATER TODAY' : 'TOMORROW';
+  // The card follows the pending ring: a snoozed alarm is due sooner than the alarm's own time.
+  const shownTime = !tomorrow ? null : next?.snoozed && at ? clock(at.getHours(), at.getMinutes()) : clock(tomorrow.hour, tomorrow.minute);
 
   return (
     <View style={{ flex: 1, backgroundColor: C.night, paddingTop: insets.top + 14, paddingBottom: insets.bottom + 22, paddingHorizontal: 20 }}>
@@ -212,10 +215,13 @@ function Night({ onGentle, onDay, next, bedtime, permissions, scheduled, streak,
         {tomorrow ? (
           <>
             <Text style={[styles.heroTime, { color: C.moon }]}>
-              {clock(tomorrow.hour, tomorrow.minute).time}
-              <Text style={styles.heroAmPm}> {clock(tomorrow.hour, tomorrow.minute).ampm}</Text>
+              {shownTime?.time}
+              <Text style={styles.heroAmPm}> {shownTime?.ampm}</Text>
             </Text>
-            <Text style={styles.nightSub}>{tomorrow.label} · {modeText(tomorrow)}</Text>
+            <Text style={styles.nightSub}>
+              {tomorrow.label} · {modeText(tomorrow)}
+              {next?.snoozed ? ' · snoozed' : ''}
+            </Text>
             {at ? (
               <View style={styles.bedtimeRow}>
                 <Icon d={MOON} size={20} color={C.sun} width={2.2} />
