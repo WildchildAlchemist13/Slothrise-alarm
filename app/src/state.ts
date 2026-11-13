@@ -22,6 +22,8 @@ export type AppState = {
   alarms: Alarm[];
   /** consecutive days woken with a completed mission */
   streak: number;
+  /** the longest streak ever reached — real history, not a decorative number */
+  best: number;
   /** YYYY-MM-DD of the last completed wake, null until the first one */
   lastWin: string | null;
   /** YYYY-MM-DD of every wake, newest last, capped */
@@ -55,6 +57,7 @@ export function defaultState(): AppState {
     version: 1,
     alarms: SEED_ALARMS.map((a) => ({ ...a })),
     streak: 0,
+    best: 0,
     lastWin: null,
     wins: [],
     habits: SEED_HABITS.map((h) => ({ ...h })),
@@ -76,6 +79,21 @@ function isYesterday(key: string, now: Date): boolean {
   return dayKey(y) === key;
 }
 
+/** The longest run of consecutive days in a sorted list of day keys — the record already earned. */
+function longestRun(wins: string[]): number {
+  let best = 0;
+  let run = 0;
+  let prev: string | null = null;
+  for (const key of wins) {
+    const next = new Date(`${key}T12:00:00`);
+    next.setDate(next.getDate() - 1);
+    run = prev !== null && dayKey(next) === prev ? run + 1 : 1;
+    if (run > best) best = run;
+    prev = key;
+  }
+  return best;
+}
+
 /** Coerce whatever is on disk into something safe to render. Unknown shapes fall back to defaults. */
 function readState(raw: string): AppState {
   const base = defaultState();
@@ -92,6 +110,7 @@ function readState(raw: string): AppState {
         .filter((a): a is Alarm => !!a && typeof a.id === 'string' && Number.isFinite(a.hour) && Number.isFinite(a.minute))
         .map((a) => ({ ...a, weekdays: Array.isArray(a.weekdays) ? a.weekdays.filter((d) => d >= 1 && d <= 7) : [] }))
     : base.alarms;
+  const wins = Array.isArray(s.wins) ? s.wins.filter((w): w is string => typeof w === 'string') : [];
   const habits = Array.isArray(s.habits)
     ? base.habits.map((seed) => {
         const saved = s.habits?.find((h) => h?.id === seed.id);
@@ -102,8 +121,10 @@ function readState(raw: string): AppState {
     version: 1,
     alarms: alarms.length ? alarms : base.alarms,
     streak: Number(s.streak) || 0,
+    // Installs saved before the record existed derive it from the days they actually woke.
+    best: Number(s.best) || longestRun(wins),
     lastWin: typeof s.lastWin === 'string' ? s.lastWin : null,
-    wins: Array.isArray(s.wins) ? s.wins.filter((w): w is string => typeof w === 'string') : [],
+    wins,
     habits,
     bedtime: s.bedtime && Number.isFinite(s.bedtime.hour) ? s.bedtime : base.bedtime,
   };
@@ -132,7 +153,7 @@ export function recordWin(state: AppState, now: Date = new Date()): AppState {
   if (state.wins.includes(today)) return state;
   const streak = state.lastWin === today ? state.streak : isYesterday(state.lastWin ?? '', now) ? state.streak + 1 : 1;
   const wins = [...state.wins, today].sort().slice(-MAX_WINS);
-  return { ...state, streak, lastWin: today, wins };
+  return { ...state, streak, best: Math.max(state.best ?? 0, streak), lastWin: today, wins };
 }
 
 export type NextAlarm = { alarm: Alarm; at: Date };

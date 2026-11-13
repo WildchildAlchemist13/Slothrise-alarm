@@ -1,6 +1,6 @@
 // The wake action: press and hold. The face fills with Sun while held; letting go early drains it.
 // 76 pt tall with a hard shadow, the only button on a ringing screen.
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, type SharedValue, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -27,12 +27,25 @@ export default function HoldButton({ label, onDone, holdMs = 1100, progress, onH
   const down = useSharedValue(0);
 
   const finish = useCallback(() => {
+    if (!mounted.current) return;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     onDone();
   }, [onDone]);
 
+  // A hold that outlives its screen must not call onDone: the animation callback fires after unmount
+  // and would jump to the next screen with nobody holding anything down.
+  const mounted = useRef(true);
+  useEffect(
+    () => () => {
+      mounted.current = false;
+    },
+    [],
+  );
+
   const start = () => {
     onHoldStart?.();
+    // A leftover completed value would make the next press finish instantly.
+    if (hold.value >= 1) hold.value = 0;
     down.value = withTiming(1, { duration: 80 });
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     hold.value = withTiming(1, { duration: holdMs * (1 - hold.value), easing: Easing.linear }, (done) => {
