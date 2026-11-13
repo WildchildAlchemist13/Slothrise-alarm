@@ -15,7 +15,7 @@ import WinScreen from './src/WinScreen';
 import RoutineScreen from './src/RoutineScreen';
 import GentleScreen from './src/GentleScreen';
 import { C, isNight } from './src/theme';
-import { ensurePermissions, installHandler, scheduleAlarms, scheduledCount, type AlarmPermissions } from './src/alarms';
+import { cancelChain, ensurePermissions, installHandler, scheduleAlarms, scheduledCount, snoozeAlarm, type AlarmPermissions } from './src/alarms';
 import { clock, loadState, nextAlarm, recordWin, saveState, type Alarm, type AppState } from './src/state';
 
 type Screen = 'welcome' | 'home' | 'ringing' | 'mission' | 'gentle' | 'win' | 'routine';
@@ -77,6 +77,9 @@ export default function App() {
   const ring = useCallback((alarmId?: unknown) => {
     const current = stateRef.current;
     if (!current) return;
+    // Someone is looking at a ringing alarm: stop every follow-up ring queued behind it, whichever
+    // alarm it belonged to, so a stale chain cannot keep firing at a person who already got up.
+    void cancelChain();
     const found = typeof alarmId === 'string' ? current.alarms.find((a) => a.id === alarmId) ?? null : null;
     setActiveAlarm(found ?? nextAlarm(current.alarms)?.alarm ?? current.alarms[0] ?? null);
     setRunId((n) => n + 1);
@@ -115,8 +118,18 @@ export default function App() {
   const completeWake = useCallback(() => {
     const current = stateRef.current;
     if (!current) return;
+    void cancelChain();
     update(recordWin(current));
-  }, [update]);
+    // Re-arm the follow-up rings for the alarm that comes next.
+    reschedule(current.alarms);
+  }, [reschedule, update]);
+
+  /** Snooze really snoozes: the same alarm is scheduled again in five minutes and the home screen waits. */
+  const snooze = useCallback(() => {
+    const alarm = activeAlarm;
+    if (alarm) void snoozeAlarm(alarm).then(() => scheduledCount()).then(setScheduled);
+    go('home');
+  }, [activeAlarm]);
 
   if (!fontsLoaded || !state) return <View style={{ flex: 1, backgroundColor: C.paper }} />;
   const dark = DARK.includes(screen) || (screen === 'home' && isNight());
@@ -154,14 +167,15 @@ export default function App() {
             <RingingScreen
               alarm={activeAlarm}
               time={activeAlarm ? clock(activeAlarm.hour, activeAlarm.minute).time : ''}
-              streak={state.streak}
               onWake={() => go('mission')}
-              onSnooze={() => go('home')}
+              onSnooze={snooze}
             />
           )}
           {screen === 'mission' && (
             <MissionScreen
               time={activeAlarm ? `${clock(activeAlarm.hour, activeAlarm.minute).time} ${clock(activeAlarm.hour, activeAlarm.minute).ampm}` : ''}
+              style={state.missionStyle}
+              onStyle={(missionStyle) => update({ ...state, missionStyle })}
               onDone={() => {
                 completeWake();
                 go('win');

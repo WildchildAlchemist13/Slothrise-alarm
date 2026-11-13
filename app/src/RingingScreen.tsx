@@ -23,12 +23,11 @@ type Props = {
   /** the alarm that fired; null only if the schedule changed while it rang */
   alarm: Alarm | null;
   time: string;
-  streak: number;
   onWake: () => void;
   onSnooze: () => void;
 };
 
-export default function RingingScreen({ alarm, time, streak, onWake, onSnooze }: Props) {
+export default function RingingScreen({ alarm, time, onWake, onSnooze }: Props) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const displayW = Math.min(width * 0.56, 230);
@@ -87,7 +86,7 @@ export default function RingingScreen({ alarm, time, streak, onWake, onSnooze }:
         />
         <TextButton
           label="Snooze 5 min"
-          sub={streak > 0 ? `Puts your ${streak} day streak at risk` : 'Skips today’s wake'}
+          sub="Rings again in 5 minutes"
           onPress={onSnooze}
         />
       </View>

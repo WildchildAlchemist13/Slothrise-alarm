@@ -31,6 +31,8 @@ export type AppState = {
   habits: Habit[];
   /** the time you mean to be in bed, used for the wind-down card */
   bedtime: { hour: number; minute: number };
+  /** which mission dismisses the alarm: three sums, or a tap count for anyone who cannot do the maths */
+  missionStyle: 'math' | 'tap';
 };
 
 const KEY = 'slothrise/app-state/v1';
@@ -62,6 +64,7 @@ export function defaultState(): AppState {
     wins: [],
     habits: SEED_HABITS.map((h) => ({ ...h })),
     bedtime: { hour: 22, minute: 30 },
+    missionStyle: 'math',
   };
 }
 
@@ -127,6 +130,7 @@ function readState(raw: string): AppState {
     wins,
     habits,
     bedtime: s.bedtime && Number.isFinite(s.bedtime.hour) ? s.bedtime : base.bedtime,
+    missionStyle: s.missionStyle === 'tap' ? 'tap' : 'math',
   };
 }
 

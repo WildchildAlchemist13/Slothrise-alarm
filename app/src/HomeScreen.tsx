@@ -185,6 +185,8 @@ function Night({ onGentle, onDay, next, bedtime, permissions, scheduled, streak,
   const at = next?.at ?? null;
   const bed = clock(bedtime.hour, bedtime.minute);
   const enabled = alarms.filter((a) => a.enabled).length;
+  // The card says when the alarm actually is, not "tomorrow" by default: a 6:30 alarm at 10 pm is tonight.
+  const heading = !at ? 'NEXT ALARM' : dayKey(at) === dayKey() ? 'LATER TODAY' : 'TOMORROW';
 
   return (
     <View style={{ flex: 1, backgroundColor: C.night, paddingTop: insets.top + 14, paddingBottom: insets.bottom + 22, paddingHorizontal: 20 }}>
@@ -206,7 +208,7 @@ function Night({ onGentle, onDay, next, bedtime, permissions, scheduled, streak,
 
       <View style={styles.nightCard}>
         <Image source={POSES.sleepCloud} style={{ position: 'absolute', right: -10, top: 12, width: poseW, height: poseW / POSE_RATIO.sleepCloud }} accessibilityLabel="Snooze asleep on a cloud" />
-        <Label color={C.dim}>TOMORROW</Label>
+        <Label color={C.dim}>{heading}</Label>
         {tomorrow ? (
           <>
             <Text style={[styles.heroTime, { color: C.moon }]}>
