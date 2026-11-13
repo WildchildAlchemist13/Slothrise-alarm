@@ -5,11 +5,14 @@
 /* eslint-disable import/namespace -- expo-notifications exports these Android enums at runtime, but the
    rule resolves the package's declaration file and calls them missing. Values are the Android SDK's. */
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import { nextAlarm, type Alarm } from './state';
 
 export const ALARM_CHANNEL = 'alarm';
 export const ALARM_SOUND = 'alarm_chime.wav';
+/** The sunrise's bells; listed in app.json so iOS has it in the bundle root for a locked-phone delivery. */
+export const GENTLE_SOUND = 'gentle_bells.wav';
 
 /**
  * iOS plays a notification's sound once — about three seconds — and then stops. A person who does not touch
@@ -83,10 +86,30 @@ function content(alarm: Alarm, chain = false): Notifications.NotificationContent
   return {
     title: alarm.label,
     body: alarm.mode === 'gentle' ? 'The sunrise is starting. Hold to wake.' : 'Time to get up. Hold to wake.',
-    sound: ALARM_SOUND,
+    sound: alarm.mode === 'gentle' ? GENTLE_SOUND : ALARM_SOUND,
     interruptionLevel: 'timeSensitive',
     data: { alarmId: alarm.id, ...(chain ? { chain: true } : {}) },
   };
+}
+
+/* Chain diagnostics. A Release build prints nothing to the device log (RCTLog is a no-op without a log
+   function), so the last few lines also go to AsyncStorage where a container pull can read them. */
+const CHAIN_LOG_KEY = '@slothrise/chainlog';
+const CHAIN_LOG_LIMIT = 900;
+
+const stamp = (d: Date | number) => new Date(d).toISOString().slice(11, 19);
+const shortId = (id: string) => id.slice(0, 8);
+
+async function logChain(line: string): Promise<void> {
+  console.log(`[chain] ${line}`);
+  try {
+    const raw = await AsyncStorage.getItem(CHAIN_LOG_KEY);
+    const lines = `${raw ? `${raw}\n` : ''}${stamp(new Date())} ${line}`.split('\n');
+    while (lines.join('\n').length > CHAIN_LOG_LIMIT) lines.shift();
+    await AsyncStorage.setItem(CHAIN_LOG_KEY, lines.join('\n'));
+  } catch {
+    // diagnostics must never break scheduling
+  }
 }
 
 function trigger(alarm: Alarm, weekday: number): Notifications.NotificationTriggerInput {
@@ -118,24 +141,37 @@ export type ScheduleResult = { scheduled: number; error?: string };
 async function scheduleChain(alarm: Alarm, from: Date): Promise<number> {
   if (Platform.OS !== 'ios') return 0;
   let count = 0;
+  const at: string[] = [];
   for (let i = 1; i <= CHAIN_REPEATS; i += 1) {
     const date = new Date(from.getTime() + i * CHAIN_STEP_MS);
     if (date.getTime() <= Date.now()) continue;
     await Notifications.scheduleNotificationAsync({ content: content(alarm, true), trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date } });
     count += 1;
+    at.push(stamp(date));
   }
+  await logChain(`arm ${alarm.id}/${alarm.mode} from=${stamp(from)} count=${count} at=[${at.join(' ')}]`);
   return count;
+}
+
+/** Every pending notification, compactly: identifier, chain flag and alarm id. */
+function describe(pending: Notifications.NotificationRequest[]): string {
+  return pending
+    .map((n) => {
+      const d = n.content.data;
+      return `${shortId(n.identifier)}:${d?.alarmId ?? '-'}${d?.chain === true ? '*' : ''}`;
+    })
+    .join(' ');
 }
 
 /** Cancel pending follow-up rings, for one alarm or all of them. Reading the store means this works after a restart. */
 export async function cancelChain(alarmId?: string): Promise<void> {
   try {
     const pending = await Notifications.getAllScheduledNotificationsAsync();
-    await Promise.all(
-      pending
-        .filter((n) => n.content.data?.chain === true && (!alarmId || n.content.data?.alarmId === alarmId))
-        .map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)),
-    );
+    const doomed = pending.filter((n) => n.content.data?.chain === true && (!alarmId || n.content.data?.alarmId === alarmId));
+    await logChain(`cancel ${alarmId ?? 'all'} pending=${pending.length} chain=${doomed.length} [${describe(pending)}]`);
+    await Promise.all(doomed.map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)));
+    const left = await Notifications.getAllScheduledNotificationsAsync();
+    await logChain(`cancel ${alarmId ?? 'all'} left=${left.length} chain=${left.filter((n) => n.content.data?.chain === true).length} [${describe(left)}]`);
   } catch {
     // nothing scheduled is the same outcome as cancelling everything
   }
@@ -164,6 +200,7 @@ export async function scheduleAlarms(alarms: Alarm[]): Promise<ScheduleResult> {
   try {
     await ensureChannel();
     await Notifications.cancelAllScheduledNotificationsAsync();
+    await logChain(`schedule ${alarms.filter((a) => a.enabled).map((a) => `${a.id}/${a.mode}`).join(' ') || 'none'}`);
     let scheduled = 0;
     for (const alarm of alarms) {
       if (!alarm.enabled) continue;

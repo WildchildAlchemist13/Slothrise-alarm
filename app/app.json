@@ -51,7 +51,8 @@
           "defaultChannel": "alarm",
           "enableRemoteNotifications": false,
           "sounds": [
-            "./assets/sounds/alarm_chime.wav"
+            "./assets/sounds/alarm_chime.wav",
+            "./assets/sounds/gentle_bells.wav"
           ]
         }
       ],
