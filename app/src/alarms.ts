@@ -7,7 +7,7 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
-import { nextRing, type Alarm, type AppState } from './state';
+import { nextAlarm, nextRing, type Alarm, type AppState } from './state';
 
 export const ALARM_CHANNEL = 'alarm';
 export const ALARM_SOUND = 'alarm_chime.wav';
@@ -22,6 +22,13 @@ export const GENTLE_SOUND = 'gentle_bells.wav';
  */
 export const CHAIN_STEP_MS = 30_000;
 export const CHAIN_REPEATS = 9; // 0 + 9 x 30 s — about five minutes of ringing
+/** iOS keeps at most 64 pending local notifications; this budget stays clear of it. */
+export const PENDING_BUDGET = 50;
+/** The fewest follow-ups worth arming: three beats a single chime. */
+export const CHAIN_FLOOR = 3;
+const ALL_DAYS = [1, 2, 3, 4, 5, 6, 7];
+/** Identifiers listed per log line before they are summarised; a long list used to evict the line QA needed. */
+const IDS_SHOWN = 8;
 /** How long the snooze button waits before the alarm rings again. */
 export const SNOOZE_MS = 5 * 60_000;
 
@@ -148,11 +155,11 @@ export type ScheduleResult = { scheduled: number; error?: string };
  * The follow-up rings after a delivery or a snooze. iOS only: an Android alarmClock notification keeps
  * sounding until it is dismissed, so it needs no chain.
  */
-async function scheduleChain(alarm: Alarm, from: Date): Promise<number> {
+async function scheduleChain(alarm: Alarm, from: Date, steps = CHAIN_REPEATS): Promise<number> {
   if (Platform.OS !== 'ios') return 0;
   let count = 0;
   const at: string[] = [];
-  for (let i = 1; i <= CHAIN_REPEATS; i += 1) {
+  for (let i = 1; i <= steps; i += 1) {
     const date = new Date(from.getTime() + i * CHAIN_STEP_MS);
     if (date.getTime() <= Date.now()) continue;
     await Notifications.scheduleNotificationAsync({ content: content(alarm, true), trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date } });
@@ -163,14 +170,16 @@ async function scheduleChain(alarm: Alarm, from: Date): Promise<number> {
   return count;
 }
 
-/** Every pending notification, compactly: identifier, chain flag and alarm id. */
+/** Every pending notification, compactly: identifier, chain flag and alarm id. Long lists are summarised. */
 function describe(pending: Notifications.NotificationRequest[]): string {
-  return pending
+  const shown = pending
+    .slice(0, IDS_SHOWN)
     .map((n) => {
       const d = n.content.data;
       return `${shortId(n.identifier)}:${d?.alarmId ?? '-'}${d?.chain === true ? '*' : ''}`;
     })
     .join(' ');
+  return pending.length > IDS_SHOWN ? `${shown} +${pending.length - IDS_SHOWN} more` : shown;
 }
 
 /* Every mutation of the notification store goes through this one queue, so a cancel and a reschedule can
@@ -215,6 +224,67 @@ export async function cancelChain(alarmId?: string, receivedAt?: number): Promis
   });
 }
 
+/** Chain steps this close to firing are treated as due while a ring screen is open (a snooze chain is ≤9.5 min). */
+const RING_WINDOW_MS = 15 * 60_000;
+
+async function cancelDueChains(): Promise<number> {
+  const pending = await Notifications.getAllScheduledNotificationsAsync();
+  const now = Date.now();
+  const due = pending.filter((n) => {
+    if (n.content.data?.chain !== true) return false;
+    const when = (n.trigger as { date?: number | string }).date;
+    if (when === undefined) return false;
+    const ms = new Date(when).getTime();
+    return Number.isFinite(ms) && ms - now <= RING_WINDOW_MS;
+  });
+  await Promise.all(due.map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)));
+  return due.length;
+}
+
+/** How many follow-ups each enabled alarm's next ring gets, given what is left of the budget. */
+type ChainPlan = { alarm: Alarm; at: Date; steps: number };
+
+function planChains(state: AppState, ring: ReturnType<typeof nextRing>, budget: number): ChainPlan[] {
+  const now = new Date();
+  // One entry per enabled alarm, nearest first; the snoozed alarm's entry is its snooze, not next week's ring.
+  const slots = state.alarms
+    .filter((a) => a.enabled)
+    .map((alarm) => {
+      const snoozed = ring?.snoozed === true && ring.alarm.id === alarm.id;
+      const at = snoozed && ring ? ring.at : nextAlarm([alarm], now)?.at ?? null;
+      return at ? { alarm, at, snoozed } : null;
+    })
+    .filter((s): s is { alarm: Alarm; at: Date; snoozed: boolean } => s !== null)
+    .sort((a, b) => a.at.getTime() - b.at.getTime());
+
+  const steps = new Map<string, number>(slots.map((s) => [s.alarm.id, 0]));
+  let left = Math.max(0, budget);
+
+  // The snoozed ring keeps its full chain first: it is the ring that is about to happen.
+  const live = slots.find((s) => s.snoozed);
+  if (live) {
+    const give = Math.min(CHAIN_REPEATS, left);
+    steps.set(live.alarm.id, give);
+    left -= give;
+  }
+  // Then a floor for every other ring, nearest first, so no alarm is left with a single chime.
+  for (const slot of slots) {
+    if (slot.snoozed || left <= 0) continue;
+    const give = Math.min(CHAIN_FLOOR, left);
+    steps.set(slot.alarm.id, give);
+    left -= give;
+  }
+  // Then top up to the full chain, again nearest first.
+  for (const slot of slots) {
+    if (slot.snoozed || left <= 0) continue;
+    const want = CHAIN_REPEATS - (steps.get(slot.alarm.id) ?? 0);
+    const give = Math.min(want, left);
+    steps.set(slot.alarm.id, (steps.get(slot.alarm.id) ?? 0) + give);
+    left -= give;
+  }
+  return slots.map((s) => ({ alarm: s.alarm, at: s.at, steps: steps.get(s.alarm.id) ?? 0 })).filter((p) => p.steps > 0);
+}
+
 /** A one-off ring at a chosen time: the snooze anchor, whose weekly triggers do not cover it. */
 function oneOffTrigger(at: Date): Notifications.NotificationTriggerInput {
   return Platform.OS === 'android'
@@ -240,12 +310,13 @@ async function arm(state: AppState): Promise<ScheduleResult> {
     let scheduled = 0;
     for (const alarm of state.alarms) {
       if (!alarm.enabled) continue;
-      const days = alarm.weekdays.length ? alarm.weekdays : [1, 2, 3, 4, 5, 6, 7];
+      const days = alarm.weekdays.length ? alarm.weekdays : ALL_DAYS;
       for (const weekday of days) {
         await Notifications.scheduleNotificationAsync({ content: content(alarm), trigger: trigger(alarm, weekday) });
         scheduled += 1;
       }
     }
+    const anchors = scheduled;
     // The ring actually coming next: a live snooze first, otherwise the weekly schedule. An expired or
     // orphaned snooze is already dropped by nextRing, so it cannot hold this slot.
     const ring = nextRing(state);
@@ -253,12 +324,21 @@ async function arm(state: AppState): Promise<ScheduleResult> {
       await Notifications.scheduleNotificationAsync({ content: content(ring.alarm), trigger: oneOffTrigger(ring.at) });
       scheduled += 1;
     }
-    // Follow-up rings for that one ring; the weekly triggers above carry the later alarms.
-    if (ring) scheduled += await scheduleChain(ring.alarm, ring.at);
-    // Someone is looking at the ring screen: whatever this reschedule just armed must not ring behind it.
+    // Every enabled alarm gets follow-ups, not just the one that rings next: a ring that plays once and stops
+    // is the product's core promise broken. Anchors are counted first because they all have to stay; what is
+    // left of the budget goes to each alarm's next occurrence, nearest first, with the snoozed ring keeping a
+    // full chain because its slot is the one already sold.
+    const plan = planChains(state, ring, PENDING_BUDGET - scheduled);
+    for (const step of plan) scheduled += await scheduleChain(step.alarm, step.at, step.steps);
+    // The store's own total, not our intent: QA reads this to see the distribution rather than infer it.
+    const armed = await Notifications.getAllScheduledNotificationsAsync();
+    logChain(`pending ${armed.length} budget=${PENDING_BUDGET} anchors=${anchors} plan=[${plan.map((p) => `${p.alarm.id}:${p.steps}`).join(' ')}]`);
+    // Someone is looking at the ring screen: no chain step due soon may fire behind it. Only the imminent ones
+    // are cancelled, because every alarm now has a chain and cancelling them all would leave an install with no
+    // follow-ups at all until the next launch.
     if (ringOpen) {
-      await cancelChains(ring?.alarm.id);
-      logChain('ring open, chain re-cancelled after reschedule');
+      const cancelled = await cancelDueChains();
+      logChain(`ring open, cancelled ${cancelled} chain step(s) due within ${RING_WINDOW_MS / 60_000} min`);
     }
     return { scheduled };
   } catch (e) {
