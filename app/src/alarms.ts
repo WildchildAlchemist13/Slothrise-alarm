@@ -173,18 +173,46 @@ function describe(pending: Notifications.NotificationRequest[]): string {
     .join(' ');
 }
 
+/* Every mutation of the notification store goes through this one queue, so a cancel and a reschedule can
+   never interleave: on a cold start from a tapped notification both run in the same second, and a cancel
+   that read the store before the reschedule armed a chain used to leave one follow-up behind. */
+let mutations: Promise<unknown> = Promise.resolve();
+
+function serial<T>(task: () => Promise<T>): Promise<T> {
+  const run = mutations.then(task, task);
+  mutations = run.catch(() => {});
+  return run;
+}
+
+/** True while an alarm's own screen is open, so nothing may arm a chain behind it. */
+let ringOpen = false;
+
+export function setRingOpen(open: boolean): void {
+  ringOpen = open;
+}
+
+async function cancelChains(alarmId?: string, receivedAt?: number): Promise<void> {
+  const entered = Date.now();
+  const pending = await Notifications.getAllScheduledNotificationsAsync();
+  // Timestamps for the cold-start race: how long after the tap the cancel started, and how long the store
+  // read took. If the read is what is slow, that shows up here as a large read, not as a late entry.
+  const since = receivedAt ? `+${entered - receivedAt}ms` : 'n/a';
+  const doomed = pending.filter((n) => n.content.data?.chain === true && (!alarmId || n.content.data?.alarmId === alarmId));
+  logChain(`cancel ${alarmId ?? 'all'} since=${since} read=${Date.now() - entered}ms pending=${pending.length} chain=${doomed.length} [${describe(pending)}]`);
+  await Promise.all(doomed.map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)));
+  const left = await Notifications.getAllScheduledNotificationsAsync();
+  logChain(`cancel ${alarmId ?? 'all'} left=${left.length} chain=${left.filter((n) => n.content.data?.chain === true).length} [${describe(left)}]`);
+}
+
 /** Cancel pending follow-up rings, for one alarm or all of them. Reading the store means this works after a restart. */
-export async function cancelChain(alarmId?: string): Promise<void> {
-  try {
-    const pending = await Notifications.getAllScheduledNotificationsAsync();
-    const doomed = pending.filter((n) => n.content.data?.chain === true && (!alarmId || n.content.data?.alarmId === alarmId));
-    logChain(`cancel ${alarmId ?? 'all'} pending=${pending.length} chain=${doomed.length} [${describe(pending)}]`);
-    await Promise.all(doomed.map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)));
-    const left = await Notifications.getAllScheduledNotificationsAsync();
-    logChain(`cancel ${alarmId ?? 'all'} left=${left.length} chain=${left.filter((n) => n.content.data?.chain === true).length} [${describe(left)}]`);
-  } catch {
-    // nothing scheduled is the same outcome as cancelling everything
-  }
+export async function cancelChain(alarmId?: string, receivedAt?: number): Promise<void> {
+  return serial(async () => {
+    try {
+      await cancelChains(alarmId, receivedAt);
+    } catch {
+      // nothing scheduled is the same outcome as cancelling everything
+    }
+  });
 }
 
 /** A one-off ring at a chosen time: the snooze anchor, whose weekly triggers do not cover it. */
@@ -201,6 +229,10 @@ function oneOffTrigger(at: Date): Notifications.NotificationTriggerInput {
  * which is how a relaunch or an alarm toggle used to swallow a snooze that Home was still counting down.
  */
 export async function scheduleAlarms(state: AppState): Promise<ScheduleResult> {
+  return serial(() => arm(state));
+}
+
+async function arm(state: AppState): Promise<ScheduleResult> {
   try {
     await ensureChannel();
     await Notifications.cancelAllScheduledNotificationsAsync();
@@ -223,6 +255,11 @@ export async function scheduleAlarms(state: AppState): Promise<ScheduleResult> {
     }
     // Follow-up rings for that one ring; the weekly triggers above carry the later alarms.
     if (ring) scheduled += await scheduleChain(ring.alarm, ring.at);
+    // Someone is looking at the ring screen: whatever this reschedule just armed must not ring behind it.
+    if (ringOpen) {
+      await cancelChains(ring?.alarm.id);
+      logChain('ring open, chain re-cancelled after reschedule');
+    }
     return { scheduled };
   } catch (e) {
     return { scheduled: 0, error: e instanceof Error ? e.message : String(e) };

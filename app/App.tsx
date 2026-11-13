@@ -15,7 +15,7 @@ import WinScreen from './src/WinScreen';
 import RoutineScreen from './src/RoutineScreen';
 import GentleScreen from './src/GentleScreen';
 import { C, isNight } from './src/theme';
-import { cancelChain, ensurePermissions, installHandler, scheduleAlarms, scheduledCount, SNOOZE_MS, type AlarmPermissions } from './src/alarms';
+import { cancelChain, ensurePermissions, installHandler, scheduleAlarms, scheduledCount, setRingOpen, SNOOZE_MS, type AlarmPermissions } from './src/alarms';
 import { clock, loadState, nextAlarm, nextRing, recordWin, ringScreen, saveState, type Alarm, type AppState } from './src/state';
 
 type Screen = 'welcome' | 'home' | 'ringing' | 'mission' | 'gentle' | 'win' | 'routine';
@@ -66,8 +66,10 @@ export default function App() {
   /** An alarm rang (or its notification was tapped): ring with that alarm, or the next one if the id is unknown. */
   const ring = useCallback((alarmId?: unknown) => {
     // Stop the follow-up rings the moment someone answers, even before the screen can switch: on a cold
-    // start the alarm is being dismissed while the app is still loading.
-    void cancelChain();
+    // start the alarm is being dismissed while the app is still loading. No chain may be armed behind this
+    // screen, and the timestamp is the response receipt the chain log measures the cancel against.
+    setRingOpen(true);
+    void cancelChain(undefined, Date.now());
     const id = typeof alarmId === 'string' ? alarmId : undefined;
     const current = stateRef.current;
     if (!current) {
@@ -117,6 +119,12 @@ export default function App() {
       tapped.remove();
     };
   }, [ring]);
+
+  // ring() sets the flag at once, before state has moved; this keeps it true only while an alarm's own
+  // screen is actually open, so a later reschedule may arm a chain again once the alarm is answered.
+  useEffect(() => {
+    setRingOpen(realRing && (screen === 'ringing' || screen === 'mission' || screen === 'gentle'));
+  }, [screen, realRing]);
 
   useEffect(() => {
     // Cold start caused by tapping an alarm. The response is read once, then cleared, so an ordinary
