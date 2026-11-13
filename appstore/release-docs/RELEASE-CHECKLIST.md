@@ -7,8 +7,21 @@ which is fb8415b plus bb744e2 and **not** fc70f6c: its `main.jsbundle` contains
 `getLastNotificationResponseAsync` but no `nextRing` or `SNOOZED` string, so the snooze countdown is
 absent from it. A signed `.ipa` was still not available.
 
+A newer simulator Release build also exists at
+`/tmp/sloth-build/dd/Build/Products/Release-iphonesimulator/Slothrise.app`, built from `a2db273`:
+adhoc/linker-signed, `x86_64 arm64`, `main.jsbundle` carries `nextRing` and `SNOOZED`, all three sounds
+present at source size, no `EXDevLauncher` / dev-menu file. It is not a device build and it is not signed
+for distribution, so it moves neither A1 nor B1.
+
 Legend: **DONE** verified · **DRAFT** written, not submitted · **TODO** work remains · **BLOCKED** needs
 something only Revanth can supply · **UNKNOWN** could not be checked without signing in.
+
+## Build environment (local, 13 Nov 2026)
+
+`expo prebuild`'s own `pod install` aborts on this Mac with CocoaPods 1.17.0 / Ruby 4.0.6 when the locale
+is not UTF-8 (`UnicodeNormalization` error; `LANG` and `LC_ALL` unset in a plain shell). Re-run
+`pod install` with `LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8` — exit 0, no project or code change. Toolchain
+issue, not an app defect; expect it in a signed production build too.
 
 ## A. Binary and signing
 
