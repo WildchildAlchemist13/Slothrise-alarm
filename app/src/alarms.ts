@@ -93,23 +93,33 @@ function content(alarm: Alarm, chain = false): Notifications.NotificationContent
 }
 
 /* Chain diagnostics. A Release build prints nothing to the device log (RCTLog is a no-op without a log
-   function), so the last few lines also go to AsyncStorage where a container pull can read them. */
+   function), so the last few lines also go to AsyncStorage where a container pull can read them. They are
+   written off the critical path: cancelChain runs inside the window QA is timing, so it must not wait on
+   storage. One ordered queue keeps the lines in the order the events happened. */
 const CHAIN_LOG_KEY = '@slothrise/chainlog';
 const CHAIN_LOG_LIMIT = 900;
 
 const stamp = (d: Date | number) => new Date(d).toISOString().slice(11, 19);
 const shortId = (id: string) => id.slice(0, 8);
 
-async function logChain(line: string): Promise<void> {
-  console.log(`[chain] ${line}`);
+let logQueue: Promise<void> = Promise.resolve();
+
+async function writeChainLog(stamped: string): Promise<void> {
   try {
     const raw = await AsyncStorage.getItem(CHAIN_LOG_KEY);
-    const lines = `${raw ? `${raw}\n` : ''}${stamp(new Date())} ${line}`.split('\n');
+    const lines = `${raw ? `${raw}\n` : ''}${stamped}`.split('\n');
     while (lines.join('\n').length > CHAIN_LOG_LIMIT) lines.shift();
     await AsyncStorage.setItem(CHAIN_LOG_KEY, lines.join('\n'));
   } catch {
     // diagnostics must never break scheduling
   }
+}
+
+/** Queue one diagnostic line without awaiting it; the timestamp is taken now, the write happens later. */
+function logChain(line: string): void {
+  console.log(`[chain] ${line}`);
+  const stamped = `${stamp(new Date())} ${line}`;
+  logQueue = logQueue.then(() => writeChainLog(stamped));
 }
 
 function trigger(alarm: Alarm, weekday: number): Notifications.NotificationTriggerInput {
@@ -149,7 +159,7 @@ async function scheduleChain(alarm: Alarm, from: Date): Promise<number> {
     count += 1;
     at.push(stamp(date));
   }
-  await logChain(`arm ${alarm.id}/${alarm.mode} from=${stamp(from)} count=${count} at=[${at.join(' ')}]`);
+  logChain(`arm ${alarm.id}/${alarm.mode} from=${stamp(from)} count=${count} at=[${at.join(' ')}]`);
   return count;
 }
 
@@ -168,10 +178,10 @@ export async function cancelChain(alarmId?: string): Promise<void> {
   try {
     const pending = await Notifications.getAllScheduledNotificationsAsync();
     const doomed = pending.filter((n) => n.content.data?.chain === true && (!alarmId || n.content.data?.alarmId === alarmId));
-    await logChain(`cancel ${alarmId ?? 'all'} pending=${pending.length} chain=${doomed.length} [${describe(pending)}]`);
+    logChain(`cancel ${alarmId ?? 'all'} pending=${pending.length} chain=${doomed.length} [${describe(pending)}]`);
     await Promise.all(doomed.map((n) => Notifications.cancelScheduledNotificationAsync(n.identifier)));
     const left = await Notifications.getAllScheduledNotificationsAsync();
-    await logChain(`cancel ${alarmId ?? 'all'} left=${left.length} chain=${left.filter((n) => n.content.data?.chain === true).length} [${describe(left)}]`);
+    logChain(`cancel ${alarmId ?? 'all'} left=${left.length} chain=${left.filter((n) => n.content.data?.chain === true).length} [${describe(left)}]`);
   } catch {
     // nothing scheduled is the same outcome as cancelling everything
   }
@@ -200,7 +210,7 @@ export async function scheduleAlarms(alarms: Alarm[]): Promise<ScheduleResult> {
   try {
     await ensureChannel();
     await Notifications.cancelAllScheduledNotificationsAsync();
-    await logChain(`schedule ${alarms.filter((a) => a.enabled).map((a) => `${a.id}/${a.mode}`).join(' ') || 'none'}`);
+    logChain(`schedule ${alarms.filter((a) => a.enabled).map((a) => `${a.id}/${a.mode}`).join(' ') || 'none'}`);
     let scheduled = 0;
     for (const alarm of alarms) {
       if (!alarm.enabled) continue;
