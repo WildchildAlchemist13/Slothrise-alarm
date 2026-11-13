@@ -27,7 +27,7 @@ The Expo (React Native) app for Slothrise: Alarm & Habits, in the "Cozy Sunrise"
 - **Mission:** three sums. A wrong answer shakes and buzzes; the alarm keeps chiming until you're done.
 - **Wake win:** Snooze drops in cheering, confetti, and the streak goes up.
 - **Routine:** one "Next up" habit with a big Done button; tick or skip the rest.
-- **Gentle mode** (*Play the Gentle sunrise*, or *Goodnight, Snooze* at bedtime): night lifts into dawn while soft bells rise from 6% to 100% volume. Hold *I'm up* any time; still in bed when the backup kicks in, the full alarm takes over. The demo uses a 15 s sunrise and a 30 s backup; the real timings (180 s and 300 s) are `SUNRISE_S` and `BACKUP_S` in `src/GentleScreen.tsx`.
+- **Gentle mode** (any alarm whose mode is Gentle, *Goodnight, Snooze* at bedtime as a preview, or the dev-only *Play the Gentle sunrise*): night lifts into dawn while soft bells rise from 6% to 100% volume. Hold *I'm up* any time; still in bed when the backup kicks in, the full alarm takes over. A real alarm opens this screen instead of the ring screen, runs a 180 s sunrise with the full alarm at 300 s (`SUNRISE_S` / `BACKUP_S` in `src/GentleScreen.tsx`), and its hold counts the wake; the bedtime preview earns nothing. The dev shortcut uses 15 s / 30 s (`DEMO_SUNRISE_S` / `DEMO_BACKUP_S`) so the whole arc is visible quickly.
 - The hanging Snooze reacts to **tilt** (he swings), **drag** (push him) and **tap** (he wakes up and says hello).
 
 ## Files
@@ -44,8 +44,30 @@ The Expo (React Native) app for Slothrise: Alarm & Habits, in the "Cozy Sunrise"
 - `assets/poses/`, `assets/snooze-hang.png`: Snooze artwork
 - `assets/sounds/`: the three alarm sounds, made with `tools/sounds.py` at the repo root
 
+## Alarms that actually ring
+
+Scheduling lives in `src/alarms.ts` and runs whenever an alarm is toggled; state (alarms, streak, routine, bedtime)
+lives in `src/state.ts` on AsyncStorage. Expo Go cannot schedule these — use `npx expo run:ios|android` or an EAS
+development build (`npx eas-cli@latest build --profile development`).
+
+- **Android:** exact alarms via `USE_EXACT_ALARM` / `SCHEDULE_EXACT_ALARM`, delivered with `delivery: 'alarmClock'` on a
+  MAX-importance channel with `ALARM` audio usage, bypass-DND, a public lock-screen presentation and the looping
+  `alarm_chime.wav`. Android 13+ grants `USE_EXACT_ALARM` without a prompt to alarm-clock apps; Android 12 users are
+  asked for the exact-alarm permission on first launch.
+- **Android limit:** `expo-notifications` in SDK 58 has no full-screen-intent option, so the alarm arrives as a
+  high-priority heads-up notification that turns the screen on; tapping it opens the ringing screen. A true
+  lock-screen takeover needs a custom native module or a third-party plugin.
+- **iOS:** a repeating local notification with the app's chime at `interruptionLevel: 'timeSensitive'`, which breaks
+  through Focus. **iOS limits:** a notification cannot bypass the mute switch or ring for minutes like a system alarm,
+  and Expo SDK 58 has no AlarmKit support — AlarmKit (iOS 26) would need a third-party native module such as
+  `expo-alarm-kit`. The next real step for sound-on-silent is Apple's critical-alert entitlement.
+- **Locked phone:** local notifications fire while the device is locked; the in-app ring screen appears when the
+  notification is opened. The ring sound itself continues in the background because the app keeps iOS audio
+  (`UIBackgroundModes: audio`) and plays with `shouldPlayInBackground`.
+
 ## Not yet
 
 - The alarm editor and the Insights tab.
-- Alarms that ring while the app is closed or the phone is locked. These need native alarm scheduling (AlarmKit on iOS, exact alarms on Android), which Expo Go can't run, so that step needs a development build (`npx eas-cli@latest build --profile development`).
-- Lint: run `npx expo lint` once on your machine (its first-time setup needs network access).
+- Lint: `npx expo lint` flags 18 pre-existing React Compiler rules violations in the animation code
+  (`useSwing.ts`, `HoldButton.tsx`, `WinScreen.tsx`, `WelcomeScreen.tsx`, `RingingScreen.tsx`, `MissionScreen.tsx`,
+  `ArtHangingSnooze.tsx`). They are worklet style, not bugs; the new scheduling and state modules are clean.

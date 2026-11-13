@@ -21,9 +21,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { Icon } from './Scenery';
 import { Card, TactileButton, TextButton } from './Tactile';
+import { dayKey, weekDays } from './state';
 import { C, F, OUTLINE, POSE_RATIO, POSES } from './theme';
 
-const DAYS = ['F', 'S', 'S', 'M', 'T', 'W', 'T'];
 const COLORS = [C.sunrise, C.sun, C.leaf, C.sky, C.lilac];
 const FLAME = 'M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5 1-8.5z';
 
@@ -59,8 +59,11 @@ function Sunburst({ size }: { size: number }) {
   );
 }
 
-export default function WinScreen({ streakBefore, onRoutine, onDone }: { streakBefore: number; onRoutine: () => void; onDone: () => void }) {
+export default function WinScreen({ streak: streakNow, best, wins, onRoutine, onDone }: { streak: number; best: number; wins: string[]; onRoutine: () => void; onDone: () => void }) {
   const { width, height } = useWindowDimensions();
+  // The same Monday-based week and the same win dates HomeScreen reads, so the two screens cannot disagree.
+  const week = useMemo(() => weekDays(), []);
+  const todayKey = dayKey();
   const insets = useSafeAreaInsets();
   const burst = Math.min(width * 0.72, 290);
   const poseW = burst * 0.78;
@@ -75,7 +78,7 @@ export default function WinScreen({ streakBefore, onRoutine, onDone }: { streakB
   const reveal = useSharedValue(0);
   const today = useSharedValue(0);
   const pop = useSharedValue(1);
-  const [streak, setStreak] = useState(streakBefore);
+  const [streak, setStreak] = useState(Math.max(0, streakNow - 1));
 
   const pieces = useMemo<Piece[]>(
     () =>
@@ -89,10 +92,10 @@ export default function WinScreen({ streakBefore, onRoutine, onDone }: { streakB
   const onLand = useCallback(() => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     setTimeout(() => {
-      setStreak(streakBefore + 1);
+      setStreak(streakNow);
       pop.value = withSequence(withTiming(1.3, { duration: 140 }), withSpring(1, { damping: 7 }));
     }, 450);
-  }, [pop, streakBefore]);
+  }, [pop, streakNow]);
 
   useEffect(() => {
     spin.value = withRepeat(withTiming(1, { duration: 24000, easing: Easing.linear }), -1, false);
@@ -143,23 +146,27 @@ export default function WinScreen({ streakBefore, onRoutine, onDone }: { streakB
               <Icon d={FLAME} size={28} color={C.ink} width={2.2} />
               <Text style={styles.streakText}>{streak} day streak</Text>
             </Animated.View>
-            <View style={styles.best}>
-              <Text style={styles.bestText}>Best: 12</Text>
-            </View>
+            {best > 0 ? (
+              <View style={styles.best}>
+                <Text style={styles.bestText}>Best: {best}</Text>
+              </View>
+            ) : null}
           </View>
           <View style={styles.week}>
-            {DAYS.map((d, i) => (
-              <View key={i} style={styles.day}>
-                {i < 6 ? (
-                  <View style={[styles.cell, { backgroundColor: C.leaf }]} />
-                ) : (
-                  <View style={[styles.cell, { backgroundColor: C.oat }]}>
-                    <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: C.sun, borderRadius: 8 }, todayStyle]} />
+            {week.map((key) => {
+              const won = wins.includes(key);
+              const isToday = key === todayKey;
+              return (
+                <View key={key} style={styles.day}>
+                  <View style={[styles.cell, { backgroundColor: won && !isToday ? C.leaf : C.oat }]}>
+                    {won && isToday ? (
+                      <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: C.leaf, borderRadius: 8 }, todayStyle]} />
+                    ) : null}
                   </View>
-                )}
-                <Text style={styles.dayText}>{d}</Text>
-              </View>
-            ))}
+                  <Text style={styles.dayText}>{new Date(`${key}T12:00:00`).toLocaleDateString(undefined, { weekday: 'narrow' })}</Text>
+                </View>
+              );
+            })}
           </View>
         </Card>
       </Animated.View>

@@ -5,10 +5,16 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.slothrise.app"
+      "bundleIdentifier": "com.slothrise.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "com.apple.developer.usernotifications.time-sensitive": true
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -16,15 +22,48 @@
         "foregroundImage": "./assets/android-icon-foreground.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.slothrise.app"
+      "package": "com.slothrise.app",
+      "permissions": [
+        "android.permission.USE_EXACT_ALARM",
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-font",
-      "expo-audio"
+      [
+        "expo-audio",
+        {
+          "recordAudioAndroid": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#FF7A45",
+          "defaultChannel": "alarm",
+          "enableRemoteNotifications": false,
+          "sounds": [
+            "./assets/sounds/alarm_chime.wav",
+            "./assets/sounds/gentle_bells.wav"
+          ]
+        }
+      ],
+      "expo-asset"
     ],
-    "backgroundColor": "#0E0B1A"
+    "backgroundColor": "#FFF8EE",
+    "extra": {
+      "eas": {
+        "projectId": "f4412f05-e6ad-4220-a7c7-7171d1375e0b"
+      }
+    },
+    "owner": "revanthsharma"
   }
 }

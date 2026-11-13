@@ -3,8 +3,10 @@ import { useEffect } from 'react';
 import { setAudioModeAsync, useAudioPlayer, type AudioPlayer } from 'expo-audio';
 
 export const SOUNDS = {
-  chime: require('../assets/sounds/alarm-chime.wav'),   // full alarm: bright arpeggio, loops every 2.4 s
-  bells: require('../assets/sounds/gentle-bells.wav'),  // Gentle mode: slow warm bells, loops every 4.8 s
+  // Underscored names, not hyphens: the notifications plugin turns a sound into an Android
+  // res/raw resource, where only lowercase letters, digits and underscore are legal.
+  chime: require('../assets/sounds/alarm_chime.wav'),   // full alarm: bright arpeggio, loops every 2.4 s
+  bells: require('../assets/sounds/gentle_bells.wav'),  // Gentle mode: slow warm bells, loops every 4.8 s
   yawn: require('../assets/sounds/yawn.wav'),           // Snooze's yawn, plays once
 };
 

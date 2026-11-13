@@ -6,33 +6,36 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon, TabBar } from './Scenery';
 import { Card, Label, TactileButton, TextButton } from './Tactile';
 import { C, F, OUTLINE, POSE_RATIO, POSES, R } from './theme';
+import { dayKey } from './state';
 
-type Habit = { id: string; name: string; mins: number; streak: number; done: boolean; skipped: boolean; icon: string };
+export type RoutineHabit = { id: string; name: string; mins: number; streak: number; lastDone: string | null };
 const BED = 'M3 18v-7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v7M3 14h18M7 9V7a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 18v2M21 18v2';
 const STRETCH = 'M12 4a2 2 0 1 0 0 .1M12 8v6M7 9l5 2 5-2M9 20l3-6 3 6';
 const PHONE = 'M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM3 3l18 18';
-const START: Habit[] = [
-  { id: 'water', name: 'Big glass of water', mins: 1, streak: 5, done: true, skipped: false, icon: '' },
-  { id: 'write', name: 'Write 300 words', mins: 15, streak: 14, done: true, skipped: false, icon: '' },
-  { id: 'bed', name: 'Make the bed', mins: 2, streak: 4, done: false, skipped: false, icon: BED },
-  { id: 'stretch', name: '10 min stretch', mins: 10, streak: 1, done: false, skipped: false, icon: STRETCH },
-  { id: 'phone', name: 'No phone for 20 min', mins: 20, streak: 0, done: false, skipped: false, icon: PHONE },
-];
+// Glyph per habit id; the names, lengths and progress come from stored state.
+const GLYPH: Record<string, string> = { bed: BED, stretch: STRETCH, phone: PHONE };
 
-export default function RoutineScreen({ onAlarms }: { onAlarms: () => void }) {
+export default function RoutineScreen({ habits: stored, onChange, onAlarms }: { habits: RoutineHabit[]; onChange: (h: RoutineHabit[]) => void; onAlarms: () => void }) {
   const insets = useSafeAreaInsets();
-  const [habits, setHabits] = useState(START);
+  const today = dayKey();
+  // "Done" is a fact about today, not a switch that outlives the morning.
+  const [skipped, setSkipped] = useState<string[]>([]);
+  const habits = useMemo(() => stored.map((h) => ({ ...h, done: h.lastDone === today, icon: GLYPH[h.id] ?? '' })), [stored, today]);
   const done = habits.filter((h) => h.done).length;
-  const next = useMemo(() => habits.find((h) => !h.done && !h.skipped), [habits]);
+  const next = useMemo(() => habits.find((h) => !h.done && !skipped.includes(h.id)), [habits, skipped]);
   const rest = habits.filter((h) => h !== next);
 
   const complete = (id: string) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    setHabits((hs) => hs.map((h) => (h.id === id ? { ...h, done: true, streak: h.streak + 1 } : h)));
+    onChange(stored.map((h) => (h.id === id ? { ...h, lastDone: today, streak: h.lastDone === today ? h.streak : h.streak + 1 } : h)));
   };
-  const skip = (id: string) => setHabits((hs) => hs.map((h) => (h.id === id ? { ...h, skipped: true } : h)));
-  const toggle = (id: string) =>
-    setHabits((hs) => hs.map((h) => (h.id === id ? { ...h, done: !h.done, skipped: false, streak: h.done ? h.streak - 1 : h.streak + 1 } : h)));
+  const skip = (id: string) => setSkipped((s) => (s.includes(id) ? s : [...s, id]));
+  const toggle = (id: string) => {
+    const habit = stored.find((h) => h.id === id);
+    if (!habit) return;
+    const wasDone = habit.lastDone === today;
+    onChange(stored.map((h) => (h.id === id ? { ...h, lastDone: wasDone ? null : today, streak: wasDone ? Math.max(0, h.streak - 1) : h.streak + 1 } : h)));
+  };
 
   const coffeeW = 80;
   return (
@@ -87,7 +90,7 @@ export default function RoutineScreen({ onAlarms }: { onAlarms: () => void }) {
             >
               <View style={[styles.circle, h.done && { backgroundColor: C.leaf }]}>{h.done ? <Icon d="M5 12l5 5L20 7" size={18} width={3.4} /> : null}</View>
               <Text style={[styles.restName, h.done && styles.restDone]}>{h.name}</Text>
-              <Text style={styles.restMeta}>{h.skipped && !h.done ? 'Skipped' : h.streak ? `${h.streak} days` : 'New'}</Text>
+              <Text style={styles.restMeta}>{!h.done && skipped.includes(h.id) ? 'Skipped' : h.streak ? `${h.streak} days` : 'New'}</Text>
             </Pressable>
           ))}
         </View>

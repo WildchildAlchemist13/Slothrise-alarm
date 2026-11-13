@@ -14,12 +14,20 @@ import { TextButton } from './Tactile';
 import { SOUNDS, useLoopingSound } from './sound';
 import { useSwing } from './useSwing';
 import { C, F } from './theme';
+import type { Alarm } from './state';
 
-const ALARM = { time: '6:30', label: 'Gym before the chaos' };
 const BEAT_MS = 1100;
 const HAND = 'M9 11V5a2 2 0 0 1 4 0v6M13 10a2 2 0 0 1 4 0v3c0 4-3 7-6 7s-5-2-6-5l-1-3a1.6 1.6 0 0 1 2.8-1.5L9 13';
 
-export default function RingingScreen({ onWake, onSnooze, streak }: { onWake: () => void; onSnooze: () => void; streak: number }) {
+type Props = {
+  /** the alarm that fired; null only if the schedule changed while it rang */
+  alarm: Alarm | null;
+  time: string;
+  onWake: () => void;
+  onSnooze: () => void;
+};
+
+export default function RingingScreen({ alarm, time, onWake, onSnooze }: Props) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const displayW = Math.min(width * 0.56, 230);
@@ -61,8 +69,8 @@ export default function RingingScreen({ onWake, onSnooze, streak }: { onWake: ()
 
       <View style={[styles.top, { paddingTop: insets.top + 22 }]}>
         <Text style={styles.eyebrow}>HELLO, WAKE UP!!</Text>
-        <Text style={styles.time}>{ALARM.time}</Text>
-        <Text style={styles.label}>{ALARM.label}</Text>
+        <Text style={styles.time}>{time || '—'}</Text>
+        <Text style={styles.label}>{alarm?.label ?? 'Alarm'}</Text>
       </View>
 
       <ArtHangingSnooze width={width} displayW={displayW} branchY={branchY} swing={swing} eyes={eyes} mouth="art" zzz={zzz} gesture={drag} />
@@ -76,7 +84,11 @@ export default function RingingScreen({ onWake, onSnooze, streak }: { onWake: ()
           onHoldStart={() => (zzz.value = withTiming(0, { duration: 300 }))}
           onHoldCancel={() => (zzz.value = withTiming(1, { duration: 400 }))}
         />
-        <TextButton label="Snooze 5 min" sub={`Puts your ${streak} day streak at risk`} onPress={onSnooze} />
+        <TextButton
+          label="Snooze 5 min"
+          sub="Rings again in 5 minutes"
+          onPress={onSnooze}
+        />
       </View>
     </View>
   );

@@ -47,11 +47,16 @@ function Key({ label, onPress, kind = 'num', a11y, children }: { label?: string;
   );
 }
 
-export default function MissionScreen({ onDone }: { onDone: () => void }) {
+export type MissionStyle = 'math' | 'tap';
+/** Taps for the no-arithmetic mission, so someone with dyscalculia can still dismiss the alarm. */
+const TAPS = 20;
+
+export default function MissionScreen({ time, style, onStyle, onDone }: { time: string; style: MissionStyle; onStyle: (s: MissionStyle) => void; onDone: () => void }) {
   const insets = useSafeAreaInsets();
   const [round, setRound] = useState(0);
   const sum = useMemo(() => makeSum(round), [round]);
   const [entry, setEntry] = useState('');
+  const [taps, setTaps] = useState(0);
   const shake = useSharedValue(0);
 
   useLoopingSound(SOUNDS.chime, 0.6); // still ringing, a little softer while you think
@@ -69,6 +74,14 @@ export default function MissionScreen({ onDone }: { onDone: () => void }) {
     }
   }, [entry, sum, round, onDone, shake]);
   const press = (k: string) => setEntry((e) => (e.length < 4 ? e + k : e));
+  const tap = useCallback(() => {
+    if (taps + 1 >= TAPS) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      return onDone();
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    setTaps((t) => t + 1);
+  }, [taps, onDone]);
   const shakeStyle = useAnimatedStyle(() => ({ transform: [{ translateX: shake.value }] }));
   const peekW = 132;
 
@@ -78,35 +91,74 @@ export default function MissionScreen({ onDone }: { onDone: () => void }) {
       <View style={[styles.top, { paddingTop: insets.top + 16 }]}>
         <View>
           <Text style={styles.eyebrow}>STILL RINGING</Text>
-          <Text style={styles.smallTime}>6:30</Text>
+          <Text style={styles.smallTime}>{time || '—'}</Text>
         </View>
-        <View style={styles.dots} accessibilityLabel={`Sum ${round + 1} of ${ROUNDS}`}>
-          {Array.from({ length: ROUNDS }, (_, i) => (
-            <View key={i} style={[styles.dot, i <= round ? styles.dotOn : null]} />
-          ))}
-        </View>
+        {style === 'math' ? (
+          <View style={styles.dots} accessibilityLabel={`Sum ${round + 1} of ${ROUNDS}`}>
+            {Array.from({ length: ROUNDS }, (_, i) => (
+              <View key={i} style={[styles.dot, i <= round ? styles.dotOn : null]} />
+            ))}
+          </View>
+        ) : (
+          <Text style={styles.tapCount} accessibilityLabel={`${taps} of ${TAPS} taps done`}>
+            {taps}/{TAPS}
+          </Text>
+        )}
       </View>
 
       <View style={[styles.sheet, { paddingBottom: insets.bottom + 18 }]}>
         <Image source={POSES.peek} style={[styles.peek, { width: peekW, height: peekW / POSE_RATIO.peek, top: -(peekW / POSE_RATIO.peek) + 6 }]} accessibilityLabel="Snooze peeking, one eye open" />
-        <Text style={styles.kicker}>MISSION · MATH</Text>
-        <Text style={styles.h1}>Solve it to stop me</Text>
-        <Text style={styles.sum}>{sum.q}</Text>
-        <Animated.View style={[styles.answer, shakeStyle]}>
-          <Text style={styles.answerText}>{entry || '?'}</Text>
-        </Animated.View>
-        <View style={styles.pad}>
-          {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((k) => (
-            <Key key={k} label={k} onPress={() => press(k)} />
+        <Text style={styles.kicker}>MISSION · {style === 'math' ? 'MATH' : 'TAP'}</Text>
+        <View style={styles.switchRow} accessibilityRole="tablist">
+          {(['math', 'tap'] as const).map((s) => (
+            <Pressable
+              key={s}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: style === s }}
+              accessibilityLabel={s === 'math' ? 'Use the maths mission' : 'Use the tap mission instead'}
+              onPress={() => onStyle(s)}
+              style={[styles.seg, style === s && styles.segOn]}
+            >
+              <Text style={[styles.segText, style === s && styles.segTextOn]}>{s === 'math' ? 'Maths' : 'Tap instead'}</Text>
+            </Pressable>
           ))}
-          <Key kind="del" a11y="Delete" onPress={() => setEntry((e) => e.slice(0, -1))}>
-            <Icon d="M9 5h11v14H9l-6-7zM12 9l5 6M17 9l-5 6" size={26} />
-          </Key>
-          <Key label="0" onPress={() => press('0')} />
-          <Key kind="ok" a11y="Check answer" onPress={check}>
-            <Icon d="M5 12l5 5L20 7" size={28} width={3.2} />
-          </Key>
         </View>
+        {style === 'math' ? (
+          <>
+            <Text style={styles.h1}>Solve it to stop me</Text>
+            <Text style={styles.sum}>{sum.q}</Text>
+            <Animated.View style={[styles.answer, shakeStyle]}>
+              <Text style={styles.answerText}>{entry || '?'}</Text>
+            </Animated.View>
+            <View style={styles.pad}>
+              {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((k) => (
+                <Key key={k} label={k} onPress={() => press(k)} />
+              ))}
+              <Key kind="del" a11y="Delete" onPress={() => setEntry((e) => e.slice(0, -1))}>
+                <Icon d="M9 5h11v14H9l-6-7zM12 9l5 6M17 9l-5 6" size={26} />
+              </Key>
+              <Key label="0" onPress={() => press('0')} />
+              <Key kind="ok" a11y="Check answer" onPress={check}>
+                <Icon d="M5 12l5 5L20 7" size={28} width={3.2} />
+              </Key>
+            </View>
+          </>
+        ) : (
+          <>
+            <Text style={styles.h1}>Tap me awake</Text>
+            <Text style={styles.tapBig}>{TAPS - taps}</Text>
+            <Text style={styles.tapHint}>taps left — no numbers involved</Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Tap to wake, ${taps} of ${TAPS} done`}
+              accessibilityHint="Each tap counts once"
+              onPress={tap}
+              style={({ pressed }) => [styles.tapTarget, pressed && styles.tapTargetDown]}
+            >
+              <Text style={styles.tapTargetText}>TAP</Text>
+            </Pressable>
+          </>
+        )}
       </View>
     </View>
   );
@@ -118,6 +170,17 @@ const styles = StyleSheet.create({
   eyebrow: { fontFamily: F.label, fontSize: 12, letterSpacing: 1.8, color: C.ink },
   smallTime: { fontFamily: F.display, fontSize: 44, lineHeight: 48, color: C.ink },
   dots: { flexDirection: 'row', gap: 6, paddingBottom: 10 },
+  tapCount: { fontFamily: F.displaySemi, fontSize: 26, color: C.ink, paddingBottom: 10 },
+  switchRow: { flexDirection: 'row', gap: 8, marginTop: -4 },
+  seg: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: R.pill, borderWidth: 2, borderColor: C.ink, backgroundColor: C.white },
+  segOn: { backgroundColor: C.ink },
+  segText: { fontFamily: F.label, fontSize: 13, color: C.ink },
+  segTextOn: { color: C.paper },
+  tapBig: { fontFamily: F.display, fontSize: 96, lineHeight: 100, color: C.ink, textAlign: 'center' },
+  tapHint: { fontFamily: F.bodyBold, fontSize: 14, color: C.ink60, textAlign: 'center', marginTop: -6 },
+  tapTarget: { height: 170, borderRadius: R.xl, borderWidth: 3, borderColor: C.ink, backgroundColor: C.sun, alignItems: 'center', justifyContent: 'center', marginTop: 'auto', marginBottom: 8 },
+  tapTargetDown: { backgroundColor: C.sunrise },
+  tapTargetText: { fontFamily: F.display, fontSize: 40, color: C.ink },
   dot: { width: 28, height: 10, borderRadius: 5, borderWidth: 2, borderColor: C.ink, backgroundColor: C.white },
   dotOn: { backgroundColor: C.ink },
   sheet: { flex: 1, marginTop: 60, backgroundColor: C.paper, borderTopWidth: OUTLINE, borderColor: C.ink, borderTopLeftRadius: R.xl, borderTopRightRadius: R.xl, paddingHorizontal: 22, paddingTop: 24, gap: 12 },
