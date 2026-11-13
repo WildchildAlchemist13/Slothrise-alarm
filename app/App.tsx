@@ -234,7 +234,7 @@ export default function App() {
                 completeWake();
                 go('win');
               }}
-              onEscalate={() => go('ringing')}
+              onEscalate={() => (realRing ? go('ringing') : go('home'))}
             />
           )}
           {screen === 'win' && (
