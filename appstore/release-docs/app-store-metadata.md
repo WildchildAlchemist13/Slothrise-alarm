@@ -15,7 +15,7 @@ record for this app is UNKNOWN and was not checked (out of scope for this task).
 | Name | 30 | 25 | `Slothrise: Alarm & Habits` |
 | Subtitle | 30 | 29 | `Alarm clock with a lazy sloth` |
 | Promotional text | 170 | 163 | see below |
-| Description | 4000 | 2118 | see below |
+| Description | 4000 | 2361 | see below |
 | Keywords | 100 | 96 | see below |
 | Support URL | — | — | `https://slothrise-static-website-interactive-yd7gvtjqay.openbot.site` — live (200), expires 2026-12-12 |
 | Privacy Policy URL | — | — | `https://slothrise-static-website-interactive-yd7gvtjqay.openbot.site/privacy.html` — live (200), expires 2026-12-12 |
@@ -57,7 +57,7 @@ wake,up,mission,math,snooze,streak,routine,morning,gentle,sunrise,focus,bedtime,
 No word repeats the name (`slothrise`, `alarm`, `habits`) or the subtitle (`alarm`, `clock`, `lazy`, `sloth`).
 `offline`, `privacy`, `minimal` and `quiet` were cut only for the 100-character budget.
 
-### Description — 2118/4000
+### Description — 2361/4000
 
 ```
 Slothrise is an alarm clock with a lazy sloth called Snooze. He would rather stay in bed. You still have to get up.
@@ -69,7 +69,7 @@ When an alarm goes off, the chime loops and Snooze swings on his branch. Press a
 Then the day starts gently: the wake-up counts toward a streak, and a short morning routine gets you moving before the scroll begins.
 
 GENTLE MODE
-For mornings that need a nudge rather than a siren. The screen turns from night into dawn while the bells climb from a whisper to full volume over three minutes. Hold "I'm up" any time. Still in bed after five minutes? The full alarm takes over.
+For mornings that need a nudge rather than a siren. Open the alarm and the screen turns from night into dawn while the bells climb from a whisper to full volume over three minutes. While the phone is still locked you hear a soft bell every 30 seconds, and tapping that notification opens the sunrise — the climb happens on screen, not in your pocket. Hold "I'm up" any time. Still in bed after five minutes? The full alarm takes over.
 
 WHAT'S INSIDE
 - Alarms scheduled on your phone, ringing with the app closed
@@ -84,7 +84,7 @@ FREE AND QUIET
 No account, no sign-in, no ads, no in-app purchases, no analytics. Your alarms, habits and streak stay on your phone. Slothrise does not collect your data and does not send it anywhere.
 
 HONEST LIMITS
-Slothrise uses your phone's own notifications. On iPhone the chime repeats for about five minutes, and it is time-sensitive, so it reaches you through Focus — but a notification cannot override the silent switch, so keep the ringer on. Android uses an exact alarm on an alarm-style channel. Ringing on silent on iPhone needs Apple's critical-alert entitlement, which Slothrise does not have.
+Slothrise uses your phone's own notifications. On iPhone the alarm sound repeats for about five minutes — the chime, or the softer bell in Gentle mode — and it is time-sensitive, so it reaches you through Focus — but a notification cannot override the silent switch, so keep the ringer on. Android uses an exact alarm on an alarm-style channel. Ringing on silent on iPhone needs Apple's critical-alert entitlement, which Slothrise does not have.
 
 Made by Wildchild Alchemist. Hello, wake up!!
 ```
@@ -92,13 +92,11 @@ Made by Wildchild Alchemist. Hello, wake up!!
 Deliberate omissions, because they are not true of this binary: creating or editing alarms, more than one
 mission type, widgets, Insights, per-habit streaks beyond today, and any premium tier.
 
-**Timing caveat — must be resolved before this copy is used.** Two sentences assume Gentle mode's real
-timings ("over three minutes", "after five minutes"). The binary at 4ecad75 has
-`SUNRISE_S = 15` and `BACKUP_S = 30` in `src/GentleScreen.tsx`, commented "Demo timings so you can feel
-the whole thing quickly. In the real app: sunrise 180 s, backup 300 s." Either set the two constants to
-180 and 300 in the release build (the designed behaviour, and what the review notes also say), or change
-both numbers here and in the review notes to fifteen seconds and thirty seconds. Do not ship the copy
-against 15/30.
+**Timing caveat — resolved, keep it that way.** Two sentences assume Gentle mode's real timings ("over
+three minutes", "after five minutes"). The demo binary at 4ecad75 shipped `SUNRISE_S = 15` / `BACKUP_S = 30`;
+the Release build at 7168de6 was measured at the real pace (sunrise 3% → 100% at t≈293 s, chime takeover at
+t≈308 s), so this copy matches the build. If those constants are ever set back for a demo or a screenshot
+pass, change these numbers back rather than shipping this copy.
 
 ## Categories
 
@@ -152,8 +150,8 @@ screen says so.
 
 iOS limits we cannot change in this version: a local notification does not bypass the silent switch, and
 it sounds once rather than looping until dismissed. With the ringer on, the alarm arrives as a Time
-Sensitive notification carrying the app's own chime. Gentle mode is a 180-second rising sunrise with a
-full backup alarm at 300 seconds.
+Sensitive notification carrying the app's own sound — the chime, or the softer bell in Gentle mode. Gentle mode is a
+180-second rising sunrise with a full backup alarm at 300 seconds.
 
 The app plays bundled alarm chimes and uses haptics. It never records audio and never requests the
 microphone. There are no ads, no in-app purchases and no analytics in 1.0, and no data leaves the device.
