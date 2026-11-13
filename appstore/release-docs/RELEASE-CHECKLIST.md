@@ -1,7 +1,9 @@
 # Slothrise 1.0.0 — release checklist (iOS)
 
-State as read from `feat/real-alarms` at 4ecad75 on 12 Nov 2026. Nothing here was entered into App
-Store Connect; that is deliberate and out of scope for this task.
+State as read from `feat/real-alarms` at 78fb9f0 on 13 Nov 2026. Nothing here was entered into App
+Store Connect; that is deliberate and out of scope for this task. Where a gate says "Release build",
+it means the simulator Release build at `/tmp/shots/dd/Build/Products/Release-iphonesimulator`
+(fb8415b plus the two code commits after it); a signed `.ipa` was still not available.
 
 Legend: **DONE** verified · **DRAFT** written, not submitted · **TODO** work remains · **BLOCKED** needs
 something only Revanth can supply · **UNKNOWN** could not be checked without signing in.
@@ -15,21 +17,21 @@ something only Revanth can supply · **UNKNOWN** could not be checked without si
 | A3 | EAS project linked | App Engineer | **DONE** | `app.json` `extra.eas.projectId = f4412f05-…`, owner `revanthsharma`. |
 | A4 | Bundle id / version | App Engineer | **DONE** | `com.slothrise.app`, 1.0.0, `supportsTablet: false`. Re-verify from the built `.ipa` at upload time. |
 | A5 | Export compliance | App Engineer | **DONE** | `ITSAppUsesNonExemptEncryption: false` in `app.json`; answer "does not use encryption" in the console. |
-| A6 | `expo-dev-client` absent from the production binary | App Engineer | **TODO** | It is a dependency in `package.json`. The `production` profile does not set `developmentClient`, so the launcher should be excluded — confirm no `EXDevLauncher` / `ExpoDevMenu` in the `.ipa` before upload. |
-| A7 | App icon | Design | **DONE** | `app/assets/icon.png` is 1024 × 1024. App Store icons must have no transparency — check it, and confirm it is the v2 light icon, not the purple original. |
+| A6 | `expo-dev-client` absent from the production binary | App Engineer | **DONE** | `expo-dev-client` stays a dependency, but `eas.json` `production` sets no `developmentClient`, and the Release `.app` contains no `EXDevLauncher` / `ExpoDevMenu` file (`find` over the bundle: none). Re-check the `.ipa` at upload; this is a simulator Release build, not a signed one. |
+| A7 | App icon | Design | **TODO** | `app/assets/icon.png` is 1024 × 1024 and opaque (no alpha), but it is the **v1 flat-lavender sloth**, not the v2 icon. The v2 SVG exists (`brand/slothrise-icon-v2-square.svg`) but carries a flat `<rect y="500" width="605" height="105" fill="#4A22B8"/>` — a hard purple bar across the bottom fifth — so rasterising it produces a visible band, and the asset needs fixing before it can ship as v2. Decision is Design's. |
 | A8 | Time Sensitive delivery actually works | App Engineer | **TODO** | `src/alarms.ts` sets `interruptionLevel: 'timeSensitive'`, and the repo declares no entitlements. Apple's API doc says the level "can break through system controls such as Notification Summary and Focus"; nothing in the repo or Expo's plugin proves it will in the signed build. Test with Focus on, on device, and check the `.ipa` entitlements. If it does not break Focus, soften the claim in the review notes and do not imply it in the listing. |
-| A9 | APNs entitlement | App Engineer | **TODO** | `expo-notifications` adds the APNs entitlement by default (`enableRemoteNotifications: true`). The app is local-notification only; set `"enableRemoteNotifications": false` so the binary does not claim a push capability it never uses. |
+| A9 | APNs entitlement | App Engineer | **DONE** | `app/app.json:52` sets `"enableRemoteNotifications": false`, so `expo-notifications` does not add the APNs entitlement. Confirm from the signed `.ipa` at upload. |
 
 ## B. The thing that decides the review
 
 | # | Gate | Owner | Status | Notes |
 |---|---|---|---|---|
-| B1 | Ring test on a real, locked, pocketed iPhone | Revanth + App Engineer | **TODO** | Verified only in the simulator (`DeliveredNotifications.plist`). No hardware test exists. Must cover: ringer on, silent switch on, Focus on, screen locked, phone in a pocket, overnight. Record the outcome in the review notes if it differs from the description. |
-| B2 | Mute switch behaviour accepted as a limitation | Revanth | **UNKNOWN** | iOS local notifications cannot override the silent switch and sound once, not until dismissed. This is a product decision, not a bug to hide. Guideline 4.2 minimum functionality is the real risk for an alarm app that can be silenced. |
+| B1 | Ring test on a real, locked, pocketed iPhone | Revanth + App Engineer | **TODO** | The re-fire chain is proven in the simulator only: at fb8415b, app killed, SpringBoard delivered **10 chimes over 4 min 28 s**, 30 s apart, and stopped once the ring screen opened (QA, `FINDINGS-fb8415b.md`, `/tmp/slothrise-qa/chain1.log`). No hardware test exists. Must cover: ringer on, silent switch on, Focus on, screen locked, phone in a pocket, overnight. Record the outcome in the review notes if it differs from the description. |
+| B2 | Mute switch behaviour accepted as a limitation | Revanth | **UNKNOWN** | iOS local notifications still cannot override the silent switch — with the ringer off, the whole chain is silent. It does now repeat (~5 minutes, 10 chimes), so the old "sounds once" concern is gone; what remains is silence on the mute switch, and Highlight 4.2 minimum functionality. Product decision, not a bug to hide. |
 | B3 | Android parity | App Engineer | **TODO** | Build `5831c912…` was queued when the PR opened; the resource-name failure that blocked prebuild was fixed in 4ecad75 (`alarm_chime.wav`). Parity remains unproven. Not an iOS gate; a Play gate. |
 | B4 | Demo/preview path for the reviewer | App Engineer | **DONE** | "Try the alarm right now" on the welcome screen is in the release build (only Home's "TRY IT" shortcuts are `__DEV__`-gated). |
 | B5 | In-app purchases | — | **N/A** | No purchase code in the binary. The designed paywall ($19.99/yr, $49.99 lifetime) is not implemented; do not write IAP metadata or attach products to this version. |
-| B6 | Gentle mode timings | App Engineer | **TODO** | `SUNRISE_S = 15`, `BACKUP_S = 30` in `src/GentleScreen.tsx` — demo values, commented as such. The description and review notes say three minutes and five. Set 180/300 for the release build, or change the copy to 15/30. |
+| B6 | Gentle mode timings | App Engineer | **DONE** | `src/GentleScreen.tsx:15-16`: `SUNRISE_S = 180`, `BACKUP_S = 300`, matching the copy. The 15/30 values are now separate `DEMO_*` constants (`:19-20`). |
 
 ## C. Store assets and copy
 
@@ -41,7 +43,7 @@ something only Revanth can supply · **UNKNOWN** could not be checked without si
 | C4 | Age rating | Store Release | **DRAFT** | 4+, every content answer None. Record the tier the console actually offers. |
 | C5 | Support URL live | Store Release | **DONE** | `https://slothrise-static-website-interactive-yd7gvtjqay.openbot.site` — 200, verified by curl on 12 Nov 2026. The openbot.site copy expires **2026-12-12**. |
 | C6 | Privacy Policy URL live | Store Release | **DONE** | `https://slothrise-static-website-interactive-yd7gvtjqay.openbot.site/privacy.html` — 200, verified by curl on 12 Nov 2026. Same 30-day expiry. The live page's Gentle-mode line reads "turns the screen from night into dawn", which is what the code does. |
-| C7 | Unused microphone usage string removed | App Engineer | **TODO** | `app.json` passes only `recordAudioAndroid: false` to the expo-audio plugin, whose default `microphonePermission` still writes `NSMicrophoneUsageDescription`. Add `"microphonePermission": false`. One line; costs one rebuild. |
+| C7 | Unused microphone usage string removed | App Engineer | **DONE** | `app/app.json:43` sets `"microphonePermission": false`, and the Release `Slothrise.app/Info.plist` has no `NSMicrophoneUsageDescription` (PlistBuddy: does not exist). |
 | C8 | Review notes | Store Release | **DRAFT** | In `app-store-metadata.md`; states the mute-switch limit plainly. |
 | C9 | Copyright | Store Release | **DRAFT** | `2026 Wildchild Alchemist`. |
 | C10 | Permanent home for both pages | Revanth | **TODO** | The openbot.site publish expires 2026-12-12, which is fine for a review cycle but not for a policy URL that must stay reachable. Lasting fix: commit the same two files to `docs/slothrise/` in `BubbleWraps` and push (Pages serves `main` `/docs`), then swap the URLs. Needs Revanth's GitHub write. Do it before 12 Dec, or before the next review submission, whichever is first. |
@@ -59,7 +61,8 @@ something only Revanth can supply · **UNKNOWN** could not be checked without si
 ## The shortest honest sequence
 
 1. Revanth: `eas credentials` sign-in + register the iPhone UDID → A1.
-2. App Engineer: A6, A9, C7, then a production build; check A8 from the `.ipa`.
+2. App Engineer: production build; check A6, A8, A9 from the `.ipa` (the code side of A6, A9 and C7 is
+already done). Design: the A7 icon decision, which is the only binary asset still wrong.
 3. Revanth: one overnight locked-phone ring test (B1). If it fails, stop — the product, not the listing, is the problem.
 4. Design: five 1206 × 2622 captures (C2).
 5. Pages are live (C5, C6) on the temporary openbot.site host. Before 12 Dec 2026, or before the next
